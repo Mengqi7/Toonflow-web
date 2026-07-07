@@ -95,6 +95,7 @@ const rightBtnList = ref([
   { type: "btn", path: "/cornerScape", labelKey: "workbench.menu.cornerScape", icon: "i-peoples-two" },
   { type: "btn", path: "/production", labelKey: "workbench.menu.production", icon: "i-carousel-video" },
   { type: "divider" },
+  { type: "btn", path: "/harness", labelKey: "Harness 监控", icon: "i-activity-source" },
   { type: "btn", path: "/assets", labelKey: "workbench.menu.assetCenter", icon: "i-receive" },
 ]);
 

@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness V2 — 导演 Agent 主控台 (原型预览 v2)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fa; color: #1f2937; font-size: 14px; overflow: hidden; }
+
+  /* 顶部导航 */
+  .topbar { height: 56px; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; padding: 0 20px; gap: 20px; }
+  .topbar .logo { font-weight: 600; color: #2563eb; display: flex; align-items: center; gap: 8px; }
+  .topbar .logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; }
+  .topbar .project-name { color: #6b7280; font-size: 14px; }
+  .topbar .project-name b { color: #1f2937; }
+  .topbar .actions { display: flex; gap: 8px; margin-left: auto; }
+  .topbar .btn { padding: 6px 12px; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; color: #374151; }
+  .topbar .btn:hover { background: #f9fafb; }
+  .topbar .btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+  .topbar .btn-primary:hover { background: #1d4ed8; }
+  .topbar .btn-danger { color: #dc2626; border-color: #fecaca; }
+
+  /* 流程导览条 */
+  .flow-nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 10px 20px; display: flex; align-items: center; gap: 4px; overflow-x: auto; }
+  .flow-nav .flow-step { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+  .flow-nav .flow-step:hover { background: #f3f4f6; }
+  .flow-nav .flow-step.done { background: #d1fae5; color: #047857; }
+  .flow-nav .flow-step.running { background: #fef3c7; color: #b45309; animation: pulse 1.5s ease-in-out infinite; }
+  .flow-nav .flow-step.pending { background: #f3f4f6; color: #9ca3af; }
+  .flow-nav .flow-step.active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
+  .flow-nav .arrow { color: #d1d5db; font-size: 14px; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+  /* 主体两列 */
+  .main { display: grid; grid-template-columns: 440px 1fr; height: calc(100vh - 56px - 50px); }
+
+  /* 左侧对话 */
+  .chat-pane { background: #fff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; }
+  .chat-header { padding: 14px 20px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px; }
+  .chat-header .avatar { width: 36px; height: 36px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; }
+  .chat-header .meta .name { font-weight: 600; color: #1f2937; }
+  .chat-header .meta .role { font-size: 12px; color: #6b7280; }
+  .chat-header .status { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #059669; }
+  .chat-header .status::before { content: ""; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px #d1fae5; }
+  .chat-body { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .chat-body::-webkit-scrollbar { width: 6px; }
+  .chat-body::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+  .bubble { max-width: 92%; }
+  .bubble .sender { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+  .bubble.director .content { background: #eff6ff; border: 1px solid #dbeafe; border-radius: 4px 12px 12px 12px; padding: 10px 14px; color: #1e3a8a; line-height: 1.6; }
+  .bubble.user { align-self: flex-end; }
+  .bubble.user .content { background: #f3f4f6; border-radius: 12px 4px 12px 12px; padding: 10px 14px; color: #1f2937; line-height: 1.6; }
+  .bubble .content strong { color: #1d4ed8; }
+  .bubble .content .link { color: #2563eb; text-decoration: underline; cursor: pointer; }
+  .bubble .content ul { margin: 6px 0 4px 18px; }
+  .bubble .content li { margin: 2px 0; }
+  .bubble .content code { background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+  .bubble .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .bubble .actions .btn-mini { font-size: 12px; padding: 4px 10px; border-radius: 4px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+  .bubble .actions .btn-mini:hover { background: #f9fafb; }
+  .bubble .actions .btn-mini.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+  .chat-footer { padding: 12px 16px; border-top: 1px solid #f3f4f6; display: flex; gap: 8px; }
+  .chat-footer input { flex: 1; padding: 9px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; }
+  .chat-footer input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  .chat-footer button { padding: 0 16px; background: #2563eb; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+
+  /* 右侧步骤执行 */
+  .stage-pane { background: #f9fafb; overflow-y: auto; padding: 20px; }
+  .stage-pane::-webkit-scrollbar { width: 8px; }
+  .stage-pane::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+  .stage-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .stage-card .stage-title { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .stage-card .stage-title .icon { width: 32px; height: 32px; background: #eff6ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .stage-card .stage-title .label { font-weight: 600; color: #1f2937; font-size: 15px; }
+  .stage-card .stage-title .sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .stage-card .stage-title .live { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #059669; }
+  .stage-card .stage-title .live::before { content: ""; width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 1.5s ease-in-out infinite; }
+
+  .pill { display: inline-block; padding: 2px 8px; font-size: 11px; border-radius: 10px; }
+  .pill.green { background: #d1fae5; color: #047857; }
+  .pill.red { background: #fee2e2; color: #b91c1c; }
+  .pill.amber { background: #fef3c7; color: #b45309; }
+  .pill.gray { background: #f3f4f6; color: #6b7280; }
+  .pill.blue { background: #dbeafe; color: #1d4ed8; }
+  .pill.purple { background: #ede9fe; color: #6d28d9; }
+
+  /* 弹窗 (用户确认) */
+  .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal { background: #fff; border-radius: 12px; max-width: 640px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .modal-header { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; }
+  .modal-header .title { font-weight: 600; font-size: 16px; color: #1f2937; }
+  .modal-header .close { width: 28px; height: 28px; border-radius: 6px; border: none; background: #f3f4f6; cursor: pointer; font-size: 16px; }
+  .modal-body { padding: 20px; }
+  .modal-footer { padding: 12px 20px; border-top: 1px solid #f3f4f6; display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-footer .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; font-size: 13px; }
+  .modal-footer .btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+  .modal-footer .btn-danger { color: #dc2626; border-color: #fecaca; }
+
+  /* 通用组件样式 */
+  .step-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .step-tabs .tab { padding: 5px 12px; border: 1px solid #e5e7eb; background: #fff; border-radius: 16px; font-size: 12px; cursor: pointer; color: #6b7280; }
+  .step-tabs .tab.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+  /* 剧本行 */
+  .script-row { display: grid; grid-template-columns: 60px 1fr 100px 100px; gap: 12px; padding: 12px 14px; background: #f9fafb; border-radius: 8px; align-items: start; border: 1px solid #f3f4f6; margin-bottom: 8px; }
+  .script-row .scene-no { font-weight: 600; color: #2563eb; font-size: 15px; }
+  .script-row .scene-content { color: #1f2937; font-size: 13px; line-height: 1.6; }
+  .script-row .scene-meta { font-size: 11px; color: #6b7280; }
+
+  /* 角色卡片 */
+  .art-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .art-card { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 8px; overflow: hidden; cursor: pointer; }
+  .art-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .art-card .thumb { aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; font-size: 38px; }
+  .art-card .info { padding: 10px; }
+  .art-card .info .name { font-weight: 500; color: #1f2937; font-size: 13px; }
+  .art-card .info .meta { font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .art-card .info .status { margin-top: 6px; display: flex; gap: 4px; }
+
+  /* 分镜/图片网格 */
+  .shot-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .shot-card { aspect-ratio: 16/9; background: #f3f4f6; border-radius: 6px; position: relative; overflow: hidden; border: 2px solid transparent; cursor: pointer; }
+  .shot-card.done { border-color: #10b981; }
+  .shot-card.running { border-color: #f59e0b; }
+  .shot-card.failed { border-color: #ef4444; }
+  .shot-card.pending { opacity: 0.5; }
+  .shot-card .bg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #9ca3af; }
+  .shot-card .overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); color: #fff; padding: 6px 8px; font-size: 10px; display: flex; justify-content: space-between; }
+
+  /* 审核评分条 */
+  .review-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: #f9fafb; border-radius: 6px; margin-bottom: 4px; }
+  .review-row .name { flex: 0 0 140px; font-size: 13px; color: #1f2937; }
+  .review-row .bar { flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+  .review-row .bar .fill { height: 100%; background: #10b981; transition: width 0.5s; }
+  .review-row .bar .fill.warn { background: #f59e0b; }
+  .review-row .bar .fill.fail { background: #ef4444; }
+  .review-row .score { flex: 0 0 60px; text-align: right; font-size: 13px; font-weight: 600; }
+
+  /* 任务总览 */
+  .overview { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+  .overview h3 { font-size: 14px; color: #1f2937; margin-bottom: 12px; }
+  .overview .stats { display: flex; gap: 24px; padding: 12px 0; border-bottom: 1px dashed #e5e7eb; margin-bottom: 12px; flex-wrap: wrap; }
+  .overview .stat .v { font-size: 22px; font-weight: 600; color: #2563eb; }
+  .overview .stat .l { font-size: 11px; color: #6b7280; }
+  .overview .task-list { display: flex; flex-direction: column; gap: 6px; }
+  .overview .task-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 13px; }
+  .overview .task-row .ico { width: 22px; }
+  .overview .task-row .label { flex: 1; }
+  .overview .task-row .status { font-size: 11px; }
+
+  /* 驳回卡片 */
+  .reject-card { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 14px; margin-top: 8px; }
+  .reject-card .title { color: #b91c1c; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+  .reject-card ul { margin-left: 18px; color: #7f1d1d; font-size: 12px; line-height: 1.7; }
+  .reject-card .buttons { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .reject-card .buttons button { font-size: 12px; padding: 5px 10px; border-radius: 4px; border: 1px solid #fecaca; background: #fff; color: #b91c1c; cursor: pointer; }
+  .reject-card .buttons button.primary { background: #dc2626; color: #fff; border-color: #dc2626; }
+  .reject-card .buttons button:hover { background: #fee2e2; }
+
+  /* ComfyUI 参数编辑器 */
+  .comfyui-node { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .comfyui-node h4 { font-size: 13px; color: #374151; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .comfyui-node h4 .node-id { font-size: 11px; color: #6b7280; background: #e5e7eb; padding: 1px 6px; border-radius: 4px; }
+  .param-row { display: grid; grid-template-columns: 140px 1fr 120px; gap: 10px; align-items: center; padding: 6px 0; }
+  .param-row .label { font-size: 12px; color: #1f2937; }
+  .param-row .label .required { color: #dc2626; }
+  .param-row .input { font-size: 12px; }
+  .param-row .input input[type="text"], .param-row .input input[type="number"], .param-row .input select { width: 100%; padding: 5px 8px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 12px; }
+  .param-row .input input[type="range"] { width: 100%; }
+  .param-row .inject { font-size: 10px; color: #6b7280; font-family: monospace; }
+
+  /* 版本历史 */
+  .version-list { display: flex; flex-direction: column; gap: 8px; }
+  .version-row { display: grid; grid-template-columns: 60px 80px 1fr 100px 100px; gap: 12px; padding: 10px 12px; background: #f9fafb; border-radius: 6px; align-items: center; border: 1px solid #f3f4f6; }
+  .version-row.current { background: #eff6ff; border-color: #dbeafe; }
+  .version-row .v { font-weight: 600; color: #2563eb; }
+  .version-row .thumb { width: 60px; height: 34px; background: linear-gradient(135deg,#fef3c7,#fde68a); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .version-row .info { font-size: 12px; color: #1f2937; }
+  .version-row .info .feedback { font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .version-row .actions { display: flex; gap: 4px; justify-content: flex-end; }
+  .version-row .actions button { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; }
+
+  /* 原型控制 */
+  .demo-controls { position: fixed; bottom: 20px; right: 20px; background: #1f2937; color: #fff; padding: 12px 16px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 8px; z-index: 1000; max-width: 320px; }
+  .demo-controls .demo-title { font-size: 12px; color: #d1d5db; margin-bottom: 4px; }
+  .demo-controls .demo-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+  .demo-controls button { font-size: 11px; padding: 4px 8px; background: #374151; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+  .demo-controls button.active { background: #3b82f6; }
+  .demo-controls button:hover { background: #4b5563; }
+  .demo-controls button.active:hover { background: #2563eb; }
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="topbar">
+  <div class="logo"><div class="logo-icon">🎬</div><span>Harness V2</span></div>
+  <div class="project-name">退婚后，我继承万亿家产 <span class="pill blue" style="margin-left:6px;">实例 abc123</span></div>
+  <div class="actions">
+    <button class="btn btn-danger" onclick="showModal('pause-modal')">⏸ 暂停</button>
+    <button class="btn">⚙ 设置</button>
+    <button class="btn btn-primary" onclick="switchScene('versions')">📊 实例历史</button>
+  </div>
+</div>
+
+<!-- 流程导览条 -->
+<div class="flow-nav" id="flowNav">
+  <div class="flow-step done" onclick="switchScene('novel')">📕 小说 <span>✓</span></div>
+  <span class="arrow">→</span>
+  <div class="flow-step done" onclick="switchScene('script')">📝 剧本 <span>8场</span></div>
+  <span class="arrow">→</span>
+  <div class="flow-step done" onclick="switchScene('art')">👥 美术 <span>12+8</span></div>
+  <span class="arrow">→</span>
+  <div class="flow-step done" onclick="switchScene('storyboard')">🎞 分镜 <span>24/24</span></div>
+  <span class="arrow">→</span>
+  <div class="flow-step running" onclick="switchScene('image')">🖼 生图 <span>12/24</span></div>
+  <span class="arrow">→</span>
+  <div class="flow-step pending" onclick="switchScene('video')">🎥 视频 <span>0/24</span></div>
+  <span class="arrow">→</span>
+  <div class="flow-step pending" onclick="switchScene('review')">📋 审核 <span>—</span></div>
+</div>
+
+<!-- 主体 -->
+<div class="main">
+  <!-- 左侧对话 -->
+  <div class="chat-pane">
+    <div class="chat-header">
+      <div class="avatar">🎬</div>
+      <div class="meta">
+        <div class="name">导演 Agent</div>
+        <div class="role" id="directorRole">正在调度 · 已派出 12 个工种任务</div>
+      </div>
+      <div class="status">在线</div>
+    </div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-footer">
+      <input type="text" id="userInput" placeholder="对导演说点什么... (Enter 发送)" />
+      <button onclick="sendMessage()">发送</button>
+    </div>
+  </div>
+
+  <!-- 右侧步骤执行 -->
+  <div class="stage-pane" id="stagePane"></div>
+</div>
+
+<!-- 用户确认弹窗 (剧本阶段) -->
+<div class="modal-mask" id="modal-mask" style="display:none;">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<!-- 原型控制 -->
+<div class="demo-controls">
+  <div class="demo-title">原型演示 · 切换场景</div>
+  <div class="demo-btns" id="demoBtns">
+    <button data-scene="novel" onclick="switchScene('novel')">小说</button>
+    <button data-scene="script" onclick="switchScene('script')">剧本</button>
+    <button data-scene="art" onclick="switchScene('art')">美术</button>
+    <button data-scene="storyboard" onclick="switchScene('storyboard')">分镜</button>
+    <button data-scene="image" class="active" onclick="switchScene('image')">生图</button>
+    <button data-scene="video" onclick="switchScene('video')">视频</button>
+    <button data-scene="review" onclick="switchScene('review')">审核</button>
+    <button data-scene="comfyui" onclick="switchScene('comfyui')">ComfyUI</button>
+    <button data-scene="versions" onclick="switchScene('versions')">版本历史</button>
+  </div>
+</div>
+
+<script>
+// ============ 数据 ============
+const projectName = "退婚后，我继承万亿家产";
+
+const messages = [
+  { type: "director", time: "23:12:05", html: `
+    <div class="sender">导演 Agent · 23:12:05</div>
+    <div class="content">
+      您好, 我是 Toonflow 导演 Agent 🎬<br>
+      收到小说 <strong>《${projectName}》</strong>, 共 12 章, 约 8.6 万字。<br>
+      我已分析情节点: <code>87</code> 个核心事件, 提炼出 <code>3</code> 幕结构。<br><br>
+      <strong>我的制作计划:</strong>
+      <ul>
+        <li>📝 编剧 → 生成 <code>8</code> 场标准剧本 (已完成)</li>
+        <li>🎬 副导演 → 拆解 <code>24</code> 个分镜 (已完成)</li>
+        <li>👗 服装 / 💄 化妆 / 🏛 置景 → 三个工种并行 (已完成)</li>
+        <li>📷 DP → 按 24 个 shot 并行生图 (4 张并发) <strong>← 当前</strong></li>
+        <li>🎥 视效 → 生视频 (待 DP 完成后启动)</li>
+        <li>✂ 剪辑 + 🎵 录音 → 后期 (待视频完成后启动)</li>
+      </ul>
+      <div class="actions">
+        <button class="btn-mini primary" onclick="switchScene('script')">查看剧本</button>
+        <button class="btn-mini" onclick="switchScene('storyboard')">查看分镜</button>
+        <button class="btn-mini" onclick="alert('已记录风格调整: 切换为更冷峻的色调')">调整整体风格</button>
+      </div>
+    </div>
+  `},
+  { type: "director", time: "23:18:42", html: `
+    <div class="sender">导演 Agent · 23:18:42</div>
+    <div class="content">
+      ✅ 场 1-8 剧本已完成, 写入 <span class="link" onclick="switchScene('script')">剧本管理</span>。<br>
+      ✅ 24 个分镜已完成, 写入 <span class="link" onclick="switchScene('storyboard')">分镜表</span>。<br>
+      ✅ 12 个角色 / 8 个场景 / 5 个道具 已入 <span class="link" onclick="switchScene('art')">资产中心</span>。<br><br>
+      🔄 现在派出 <strong>DP 摄影指导</strong>, 按 4 张并发生成 24 个分镜的画面。<br>
+      预计耗时 8-12 分钟 (受 API 限流影响)。
+    </div>
+  `},
+  { type: "director", time: "23:22:15", html: `
+    <div class="sender">导演 Agent · 23:22:15</div>
+    <div class="content">
+      ⚠️ <strong>shot_3 的构图审核未通过</strong> (composition: <code>0.58</code> &lt; 阈值 <code>0.7</code>)<br>
+      监制 Agent 分析: "画面主体偏离中心, 缺少前景纵深, 与分镜描述不符"<br><br>
+      建议重做, 请您选择:
+      <div class="actions">
+        <button class="btn-mini primary" onclick="alert('已让 DP 改 prompt 重新生成 shot_3')">A) 重写构图 prompt</button>
+        <button class="btn-mini" onclick="alert('已切换为 close-up 镜头重新生成')">B) 换为 close-up 镜头</button>
+        <button class="btn-mini" onclick="switchScene('comfyui')">C) 换 ComfyUI workflow</button>
+        <button class="btn-mini" onclick="alert('已切换 SDXL 模型重新生成')">D) 换模型</button>
+        <button class="btn-mini" onclick="alert('已派给编剧重写场 3 剧本')">E) 跨工种: 让编剧改剧本</button>
+      </div>
+    </div>
+  `},
+  { type: "user", time: "23:23:01", html: `
+    <div class="sender">我 · 23:23:01</div>
+    <div class="content">A, 重写 prompt。让陈凡更靠画面右侧, 加上前景的书桌做纵深。</div>
+  `},
+  { type: "director", time: "23:23:18", html: `
+    <div class="sender">导演 Agent · 23:23:18</div>
+    <div class="content">
+      收到, 已将您的建议附加到 shot_3 的 retry instruction:<br>
+      <code>"陈凡位于画面右侧 1/3, 前景书桌虚化做纵深, 主光源左前方 45°"</code><br>
+      DP 正在重新生成, 预计 30s ...<br><br>
+      <span class="link" onclick="switchScene('versions')">查看 shot_3 的版本历史</span>
+    </div>
+  `},
+  { type: "director", time: "23:25:42", html: `
+    <div class="sender">导演 Agent · 23:25:42</div>
+    <div class="content">
+      ✅ shot_3 第二次生成已完成, 监制审核通过 (composition: <code>0.85</code>)<br>
+      v2 已设为当前版本, v1 已存档到 <span class="link" onclick="switchScene('versions')">版本历史</span>
+    </div>
+  `},
+];
+
+// ============ 9 个场景渲染器 ============
+function sceneNovel() {
+  return `
+    <div class="stage-card">
+      <div class="stage-title">
+        <div class="icon">📕</div>
+        <div><div class="label">阶段 1: 小说原文导入</div><div class="sub">由制片人 Agent 完成 · 共 12 章</div></div>
+        <div class="pill green" style="margin-left:auto;">✓ 已完成</div>
+      </div>
+      <div style="background:#f9fafb;border-radius:8px;padding:16px;color:#374151;line-height:1.7;">
+        <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">章节列表</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+          ${[1,2,3,4,5,6,7,8,9,10,11,12].map(n => `
+            <div style="background:#fff;padding:8px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;">
+              <span style="color:#2563eb;font-weight:600;">第 ${n} 章</span> · <span style="color:#6b7280;">${(4000+Math.random()*3000)|0} 字</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function sceneScript() {
+  return `
+    <div class="stage-card">
+      <div class="stage-title">
+        <div class="icon">📝</div>
+        <div><div class="label">阶段 2: 剧本生成</div><div class="sub">由编剧 Agent 完成 · 8 场戏已写入 o_script (source=harness)</div></div>
+        <div class="pill green" style="margin-left:auto;">✓ 已完成</div>
+      </div>
+      <div class="step-tabs">
+        <div class="tab active">全部 8 场</div>
+        <div class="tab">场 1-4</div>
+        <div class="tab">场 5-8</div>
+      </div>
+      ${[
+        ["场 1", "陈凡在豪华婚宴上被当场退婚，苏家当众撕毁婚约。他神色平静，转身离开。", "苏家大宅", "陈凡、苏婉、苏父"],
+        ["场 2", "陈凡回到破旧出租屋，律师敲门递来一份遗嘱——他竟是京城万亿陈家继承人。", "出租屋", "陈凡、王律师"],
+        ["场 3", "陈凡身份曝光，昔日同学王凯当众嘲讽，反被新任秘书冷眼回击。", "同学聚会", "陈凡、王凯、秘书"],
+        ["场 4", "苏家生意陷入危机，苏父登门道歉，求陈凡救苏家。", "陈家客厅", "陈凡、苏父"],
+      ].map(([n, content, loc, chars]) => `
+        <div class="script-row">
+          <div class="scene-no">${n}</div>
+          <div>
+            <div class="scene-content">${content}</div>
+            <div class="scene-meta">📍 ${loc} · 👥 ${chars}</div>
+          </div>
+          <div class="pill green">✓ 通过</div>
+          <div style="display:flex;gap:4px;justify-content:flex-end;">
+            <button style="width:24px;height:24px;border-radius:4px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;" title="编辑">✎</button>
+            <button style="width:24px;height:24px;border-radius:4px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;" title="重新生成">⟲</button>
+          </div>
+        </div>
+      `).join('')}
+      <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1e3a8a;">
+        💡 这些剧本可在 <code>#/script</code> 业务页面直接查看 (source=harness 过滤)
+      </div>
+    </div>
+  `;
+}
+
+function sceneArt() {
+  const characters = [
+    { name: "陈凡", desc: "男主 · 25 岁", emoji: "🧑", color: "linear-gradient(135deg,#dbeafe,#93c5fd)" },
+    { name: "苏婉", desc: "前未婚妻 · 23 岁", emoji: "👩", color: "linear-gradient(135deg,#fce7f3,#f9a8d4)" },
+    { name: "王律师", desc: "配角 · 45 岁", emoji: "👨‍⚖️", color: "linear-gradient(135deg,#e0e7ff,#a5b4fc)" },
+    { name: "王凯", desc: "反派同学 · 25 岁", emoji: "🧑", color: "linear-gradient(135deg,#fee2e2,#fca5a5)" },
+    { name: "苏父", desc: "苏家家主 · 55 岁", emoji: "👨", color: "linear-gradient(135deg,#fef3c7,#fde68a)" },
+    { name: "秘书", desc: "陈凡助理", emoji: "👩‍💼", color: "linear-gradient(135deg,#d1fae5,#86efac)" },
+  ];
+  return `
+    <div class="stage-card">
+      <div class="stage-title">
+        <div class="icon">👥</div>
+        <div><div class="label">阶段 3: 美术部 (角色 + 场景 + 道具)</div><div class="sub">服装 · 化妆 · 置景 三个工种并行 · 已写入 o_character_library / o_scene_library / o_prop_library</div></div>
+        <div class="pill green" style="margin-left:auto;">✓ 已完成</div>
+      </div>
+      <div class="step-tabs">
+        <div class="tab active">角色 (6)</div>
+        <div class="tab">场景 (4)</div>
+        <div class="tab">道具 (5)</div>
+      </div>
+      <div class="art-grid">
+        ${characters.map(c => `
+          <div class="art-card">
+            <div class="thumb" style="background:${c.color};">${c.emoji}</div>
+            <div class="info">
+              <div class="name">${c.name}</div>
+              <div class="meta">${c.desc}</div>
+              <div class="status">
+                <span class="pill green">已生成</span>
+                <span class="pill purple">3 套服装</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+        <div class="art-card" style="border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;">
+          <div style="text-align:center;color:#9ca3af;">
+            <div style="font-size:30px;">+</div>
+            <div style="font-size:12px;margin-top:6px;">新增角色</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1e3a8a;">
+        💡 角色库可在 <code>#/assets</code> 业务页面查看, DP 生图时会从 MemoryBus 读取角色设定保证一致性
+      </div>
+    </div>
+  `;
+}
+
+function sceneStoryboard() {
+  const shots = Array.from({length: 24}, (_, i) => ({ id: i + 1, state: "done" }));
+  return `
+    <div class="stage-card">
+      <div class="stage-title">
+        <div class="icon">🎞</div>
+        <div><div class="label">阶段 4: 分镜表</div><div class="sub">由副导演 Agent 完成 · 24 个分镜已写入 o_storyboard</div></div>
+        <div class="pill green" style="margin-left:auto;">✓ 24/24 已完成</div>
+      </div>
+      <div class="shot-grid">
+        ${shots.map(s => `
+          <div class="shot-card ${s.state}">
+            <div class="bg">🖼</div>
+            <div class="overlay"><span>shot_${s.id}</span><span>✓</span></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function sceneImage() {
+  const states = [
+    "approved","approved","rejected","approved","approved","approved","approved","approved",
+    "approved","approved","approved","reviewing","running","running","running","running",
+    "pending","pending","pending","pending","pending","pending","pending","pending"
+  ];
+  return `
+    <div class="stage-card">
+      <div class="stage-title">
+        <div class="icon">📷</div>
+        <div><div class="label">阶段 5: DP 摄影指导 · 生图 (4 张并发)</div><div class="sub">已生成 12/24 · 1 张被打回 · 4 张生成中 · 7 张排队 · 已写入 o_assets</div></div>
+        <div class="pill amber live" style="margin-left:auto;">⚡ DP 工作中</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        ${states.map((s, i) => {
+          const gradients = ["linear-gradient(135deg,#fef3c7,#fde68a)","linear-gradient(135deg,#dbeafe,#93c5fd)","linear-gradient(135deg,#fce7f3,#f9a8d4)","linear-gradient(135deg,#d1fae5,#86efac)","linear-gradient(135deg,#e0e7ff,#a5b4fc)","linear-gradient(135deg,#fed7aa,#fdba74)"];
+          const g = gradients[i % gradients.length];
+          const emojis = ["🎬","🖼","🎞","📷","🌆","🌃","🌅","🌄","🏛","🏠","🏢","👰","🤵","💼","📜","💍","💎","🚗","📱","💰","📊","🎁","🍷","🌹"];
+          const score = s === 'approved' ? { c: 0.85, st: 0.88, ch: 0.92 } :
+                        s === 'rejected' ? { c: 0.58, st: 0.72, ch: 0.80 } :
+                        s === 'reviewing' ? { c: 0.75, st: 0.78, ch: 0.85 } : null;
+          return `
+            <div style="aspect-ratio:16/9;background:${g};border-radius:8px;position:relative;overflow:hidden;cursor:pointer;border:2px solid ${s==='approved'?'#10b981':s==='rejected'?'#ef4444':s==='reviewing'?'#f59e0b':'transparent'};${s==='pending'?'opacity:0.6;':''}">
+              <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:38px;color:#d97706;">${emojis[i]}</div>
+              <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.75));color:#fff;padding:8px 10px;font-size:11px;">
+                <div style="font-weight:500;">shot_${i+1} · ${s === 'rejected' ? '⚠️ 构图 0.58' : s === 'approved' ? '✓ 通过' : s === 'reviewing' ? '⏳ 审核中' : s === 'running' ? '⚡ 生成中' : '○ 排队'}</div>
+                ${score ? `<div style="display:flex;gap:4px;margin-top:3px;font-size:10px;">
+                  <span style="color:${score.c>=0.7?'#86efac':'#fca5a5'};">构图 ${score.c}</span>
+                  <span style="color:${score.st>=0.7?'#86efac':'#fca5a5'};">风格 ${score.st}</span>
+                  <span style="color:${score.ch>=0.7?'#86efac':'#fca5a5'};">角色 ${score.ch}</span>
+                </div>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="reject-card" style="margin-top:14px;">
+        <div class="title">🚨 监制 Agent 报告: shot_3 构图审核未通过 (composition: 0.58 &lt; 0.7)</div>
+        <ul>
+          <li>画面主体偏离中心, 缺少前景纵深</li>
+          <li>与分镜描述"陈凡正面特写"不符</li>
+          <li>建议: 重写构图 prompt, 加上前景书桌做纵深</li>
+        </ul>
+        <div class="buttons">
+          <button class="primary" onclick="alert('已让 DP 重写 prompt 重新生成 shot_3')">A. 重写构图 prompt</button>
+          <button onclick="alert('已切换为 close-up 镜头')">B. 换为 close-up 镜头</button>
+          <button onclick="switchScene('comfyui')">C. 换 ComfyUI workflow</button>
+          <button onclick="alert('已切换为 Seedream 模型')">D. 换模型</button>
+          <button onclick="alert('已派给编剧重写场 3 剧本')">E. 跨工种: 让编剧改剧本</button>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1e3a8a;">
+        💡 生成的图片可在 <code>#/cornerScape</code> 业务页面查看 (source=harness)
+      </div>
+    </div>
+  `;
+}
+
+function sceneVideo() {
+  return `
+    <div class="stage-card">
+      <div class="stage-title">
+        <div class="icon">🎥</div>
+        <div><div class="label">阶段 6: 视效 · 生视频 (2 个并发)</div><div class="sub">等待 DP 生图全部完成后启动 · 24 个镜头待生成 · 调用 Wan2.1 / ComfyUI</div></div>
+        <div class="pill gray" style="margin-left:auto;">⏸ 等待中</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        ${Array.from({length: 24}, (_, i) => `
+          <div style="aspect-ratio:16/9;background:linear-gradient(135deg,#f3f4f6,#e5e7eb);border-radius:8px;position:relative;overflow:hidden;opacity:0.6;">
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:38px;color:#9ca3af;">▶</div>
+            <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.5));color:#fff;padding:8px 10px;font-size:11px;">
+              <div>clip_${i+1} · 排队</div>
+              <div style="font-size:10px;margin-top:3px;">5s · 1080p · Wan2.1</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="margin-top:12px;padding:10px;background:#fef3c7;border-radius:6px;font-size:12px;color:#92400e;">
+        ⏳ 等待依赖: DP 生图需全部通过审核 (当前 12/24)
+      </div>
+    </div>
+  `;
+}
+
+function sceneReview() {
+  return `
+    <div class="stage-card">
+      <div class="stage-title">
+        <div class="icon">📋</div>
+        <div><div class="label">阶段 7: 审核报告</div><div class="sub">由监制 Agent 综合审核 · 整体评分 0.84 (良好)</div></div>
+        <div class="pill amber" style="margin-left:auto;">⏳ 部分待审</div>
+      </div>
+      <div class="overview">
+        <h3>综合审核评分 (12/24 已审核)</h3>
+        <div class="stats">
+          <div class="stat"><div class="v">0.84</div><div class="l">综合分</div></div>
+          <div class="stat"><div class="v" style="color:#059669;">11</div><div class="l">通过</div></div>
+          <div class="stat"><div class="v" style="color:#dc2626;">1</div><div class="l">打回</div></div>
+          <div class="stat"><div class="v" style="color:#6b7280;">12</div><div class="l">待审</div></div>
+        </div>
+        <h4 style="font-size:13px;color:#374151;margin:12px 0 8px;">📐 技术维度 (weight 0.3)</h4>
+        <div class="review-row"><div class="name">分辨率</div><div class="bar"><div class="fill" style="width:92%"></div></div><div class="score" style="color:#059669;">0.92</div></div>
+        <div class="review-row"><div class="name">AI 瑕疵</div><div class="bar"><div class="fill" style="width:88%"></div></div><div class="score" style="color:#059669;">0.88</div></div>
+        <h4 style="font-size:13px;color:#374151;margin:12px 0 8px;">🎨 艺术维度 (weight 0.4)</h4>
+        <div class="review-row"><div class="name">构图</div><div class="bar"><div class="fill warn" style="width:74%"></div></div><div class="score" style="color:#d97706;">0.74</div></div>
+        <div class="review-row"><div class="name">风格匹配</div><div class="bar"><div class="fill" style="width:85%"></div></div><div class="score" style="color:#059669;">0.85</div></div>
+        <h4 style="font-size:13px;color:#374151;margin:12px 0 8px;">📜 内容匹配 (weight 0.3)</h4>
+        <div class="review-row"><div class="name">场景描述</div><div class="bar"><div class="fill" style="width:88%"></div></div><div class="score" style="color:#059669;">0.88</div></div>
+        <div class="review-row"><div class="name">角色一致性</div><div class="bar"><div class="fill" style="width:90%"></div></div><div class="score" style="color:#059669;">0.90</div></div>
+      </div>
+      <div class="overview">
+        <h3>📜 驳回历史 (1 条)</h3>
+        <div class="task-list">
+          <div class="task-row">
+            <div class="ico">🚨</div>
+            <div class="label"><b>shot_3</b> 构图未达 0.7 阈值 (实际 0.58) · 由监制 Agent 决策 · 23:22:15</div>
+            <div class="status"><span class="pill amber">已重做</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function sceneComfyui() {
+  return `
+    <div class="stage-card">
+      <div class="stage-title">
+        <div class="icon">🎨</div>
+        <div><div class="label">ComfyUI 工作流配置 · SDXL 人像特写</div><div class="sub">类型: image · 版本: v3 · 注入方式: widgets_values + inputs 混合</div></div>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <button class="btn" style="padding:6px 12px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;cursor:pointer;font-size:13px;" onclick="alert('回滚到 v2')">↩ 回滚到 v2</button>
+          <button class="btn" style="padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;" onclick="alert('测试运行中...')">▶ 测试运行</button>
+        </div>
+      </div>
+      
+      <div class="comfyui-node">
+        <h4>节点 4: CLIPTextEncode <span class="node-id">id=4</span></h4>
+        <div class="param-row">
+          <div class="label">Prompt <span class="required">*</span></div>
+          <div class="input"><input type="text" value="{{prompt}} - 美丽女性, 微笑, 黑色长发" /></div>
+          <div class="inject">widgets_values[0]</div>
+        </div>
+        <div class="param-row">
+          <div class="label">Negative</div>
+          <div class="input"><input type="text" value="ugly, deformed, low quality" /></div>
+          <div class="inject">widgets_values[1]</div>
+        </div>
+      </div>
+      
+      <div class="comfyui-node">
+        <h4>节点 6: KSampler <span class="node-id">id=6</span></h4>
+        <div class="param-row">
+          <div class="label">Seed</div>
+          <div class="input"><div style="display:flex;gap:4px;"><input type="number" value="1234567890" style="flex:1;" /><button style="padding:5px 8px;border:1px solid #e5e7eb;background:#fff;border-radius:4px;cursor:pointer;">🎲</button></div></div>
+          <div class="inject">inputs.seed</div>
+        </div>
+        <div class="param-row">
+          <div class="label">Steps</div>
+          <div class="input"><input type="range" min="1" max="100" value="20" oninput="this.nextElementSibling.textContent=this.value" /><div style="font-size:11px;color:#6b7280;">20</div></div>
+          <div class="inject">inputs.steps</div>
+        </div>
+        <div class="param-row">
+          <div class="label">CFG Scale</div>
+          <div class="input"><input type="range" min="1" max="20" value="7" oninput="this.nextElementSibling.textContent=this.value" /><div style="font-size:11px;color:#6b7280;">7</div></div>
+          <div class="inject">inputs.cfg</div>
+        </div>
+        <div class="param-row">
+          <div class="label">Scheduler</div>
+          <div class="input"><select><option>dpmpp_2m</option><option>euler</option><option>ddim</option><option>karras</option></select></div>
+          <div class="inject">inputs.scheduler</div>
+        </div>
+      </div>
+      
+      <div class="comfyui-node">
+        <h4>节点 10: LoadImage <span class="node-id">id=10</span></h4>
+        <div class="param-row">
+          <div class="label">参考图 (IP-Adapter)</div>
+          <div class="input"><button style="padding:5px 10px;border:1px dashed #d1d5db;background:#f9fafb;border-radius:4px;cursor:pointer;font-size:12px;">📁 上传图片</button></div>
+          <div class="inject">inputs.image</div>
+        </div>
+      </div>
+      
+      <div style="margin-top:14px;padding:12px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1e3a8a;line-height:1.7;">
+        <strong>💡 注入方式说明:</strong><br>
+        • <code>widgets_values[N]</code>: 修改节点 widgets_values 数组的第 N 个元素 (旧 API 格式)<br>
+        • <code>inputs.&lt;key&gt;</code>: 修改节点 inputs 对象的指定字段 (新 API 格式)<br>
+        ParameterEditor 自动识别两种格式, 提交时按 injectVia 字段注入
+      </div>
+    </div>
+  `;
+}
+
+function sceneVersions() {
+  return `
+    <div class="stage-card">
+      <div class="stage-title">
+        <div class="icon">📊</div>
+        <div><div class="label">版本历史 · shot_3</div><div class="sub">所有历史版本保存到 o_artifact_version 表 · 支持对比与回滚</div></div>
+      </div>
+      <div class="version-list">
+        <div class="version-row current">
+          <div class="v">v2</div>
+          <div class="thumb">🖼</div>
+          <div class="info">
+            <div>当前版本 · 23:25:42 生成</div>
+            <div class="feedback">✓ 通过 · 综合 0.85 · 构图 0.85 · 风格 0.88 · 角色 0.92</div>
+          </div>
+          <div><span class="pill green">当前</span></div>
+          <div class="actions">
+            <button onclick="alert('查看大图')">查看</button>
+          </div>
+        </div>
+        <div class="version-row">
+          <div class="v">v1</div>
+          <div class="thumb" style="background:linear-gradient(135deg,#fee2e2,#fca5a5);">🖼</div>
+          <div class="info">
+            <div>历史版本 · 23:20:15 生成 (已打回)</div>
+            <div class="feedback">✗ 失败 · 综合 0.58 · 构图 0.58 (主体偏离中心) · 风格 0.72 · 角色 0.80</div>
+          </div>
+          <div><span class="pill red">已打回</span></div>
+          <div class="actions">
+            <button onclick="alert('查看大图')">查看</button>
+            <button onclick="alert('已回滚到 v1, 创建 v3 作为当前版本')" style="background:#2563eb;color:#fff;border-color:#2563eb;">↩ 回滚</button>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-top:16px;padding:12px;background:#f9fafb;border-radius:8px;">
+        <h4 style="font-size:13px;color:#374151;margin-bottom:8px;">📋 版本对比</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <div style="font-size:11px;color:#6b7280;margin-bottom:4px;">v1 (已打回)</div>
+            <div style="aspect-ratio:16/9;background:linear-gradient(135deg,#fee2e2,#fca5a5);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:30px;">🖼</div>
+            <div style="font-size:11px;color:#dc2626;margin-top:4px;">构图 0.58 · 主体偏离</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b7280;margin-bottom:4px;">v2 (当前)</div>
+            <div style="aspect-ratio:16/9;background:linear-gradient(135deg,#d1fae5,#86efac);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:30px;">🖼</div>
+            <div style="font-size:11px;color:#059669;margin-top:4px;">构图 0.85 · 主体居中</div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1e3a8a;">
+        💡 所有产物 (剧本/图片/视频/音频) 都支持多版本保存, 历史版本永不丢失
+      </div>
+    </div>
+  `;
+}
+
+const sceneRenderers = {
+  novel: sceneNovel, script: sceneScript, art: sceneArt, storyboard: sceneStoryboard,
+  image: sceneImage, video: sceneVideo, review: sceneReview,
+  comfyui: sceneComfyui, versions: sceneVersions
+};
+
+// ============ 场景切换 ============
+function switchScene(scene) {
+  // 更新流程导览高亮
+  document.querySelectorAll('#flowNav .flow-step').forEach(el => {
+    el.classList.remove('active');
+  });
+  // 更新 demo-controls 高亮
+  document.querySelectorAll('#demoBtns button').forEach(el => {
+    el.classList.toggle('active', el.dataset.scene === scene);
+  });
+  // 渲染右侧
+  document.getElementById('stagePane').innerHTML = 
+    renderOverview(scene) + (sceneRenderers[scene] ? sceneRenderers[scene]() : '<div class="stage-card">未知场景</div>');
+  document.getElementById('stagePane').scrollTop = 0;
+}
+
+function renderOverview(currentScene) {
+  const sceneToStep = { novel: 1, script: 2, art: 3, storyboard: 4, image: 5, video: 6, review: 7 };
+  const currentStep = sceneToStep[currentScene] || 0;
+  const tasks = [
+    { ico: "📕", label: "制片人 · 导入小说", text: "✓ 完成" },
+    { ico: "📝", label: "编剧 · 生成 8 场剧本", text: "✓ 完成" },
+    { ico: "🎬", label: "副导演 · 拆解 24 个分镜", text: "✓ 完成" },
+    { ico: "👗", label: "服装 · 6 个角色", text: "✓ 完成" },
+    { ico: "💄", label: "化妆 · 6 个角色", text: "✓ 完成" },
+    { ico: "🏛", label: "置景 · 4 个场景", text: "✓ 完成" },
+    { ico: "📷", label: "DP · 24 个镜头 (4 并发)", text: currentStep >= 5 ? "⚡ 12/24" : "🔄 进行中" },
+    { ico: "🎥", label: "视效 · 24 个视频 (2 并发)", text: currentStep >= 6 ? "○ 等待" : "○ 等待" },
+    { ico: "✂", label: "剪辑师 · 时间轴", text: "○ 等待" },
+    { ico: "🎵", label: "录音 · 配音 + 拟音", text: "○ 等待" },
+    { ico: "📋", label: "监制 · 综合审核", text: "○ 等待" },
+    { ico: "🎞", label: "制片人 · 成片汇报", text: "○ 等待" },
+  ];
+  return `
+    <div class="overview">
+      <h3>📊 Harness 任务总览 (7/12 工种已完成)</h3>
+      <div class="stats">
+        <div class="stat"><div class="v" style="color:#059669;">7</div><div class="l">已完成</div></div>
+        <div class="stat"><div class="v" style="color:#d97706;">1</div><div class="l">进行中</div></div>
+        <div class="stat"><div class="v" style="color:#6b7280;">4</div><div class="l">等待中</div></div>
+        <div class="stat"><div class="v">12/24</div><div class="l">图片</div></div>
+        <div class="stat"><div class="v">¥ 0.42</div><div class="l">已花费</div></div>
+        <div class="stat"><div class="v">~8 min</div><div class="l">预计剩余</div></div>
+      </div>
+      <div class="task-list">
+        ${tasks.map(t => `
+          <div class="task-row">
+            <div class="ico">${t.ico}</div>
+            <div class="label">${t.label}</div>
+            <div class="status">${t.text}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ============ 对话 ============
+function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const body = document.getElementById('chatBody');
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  body.insertAdjacentHTML('beforeend', `
+    <div class="bubble user">
+      <div class="sender">我 · ${time}</div>
+      <div class="content">${text}</div>
+    </div>
+  `);
+  input.value = '';
+  body.scrollTop = body.scrollHeight;
+  setTimeout(() => {
+    const t2 = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()+1).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    body.insertAdjacentHTML('beforeend', `
+      <div class="bubble director">
+        <div class="sender">导演 Agent · ${t2}</div>
+        <div class="content">
+          收到您的指令, 已用 LLM 解析意图并转交相关工种:<br>
+          <code>${text}</code><br>
+          处理进度将通过 SSE 事件流实时推送, 请关注右侧步骤画面或对话气泡。
+        </div>
+      </div>
+    `);
+    body.scrollTop = body.scrollHeight;
+  }, 600);
+}
+
+// ============ 弹窗 ============
+function showModal(type) {
+  const mask = document.getElementById('modal-mask');
+  const content = document.getElementById('modal-content');
+  if (type === 'pause-modal') {
+    content.innerHTML = `
+      <div class="modal-header">
+        <div class="title">⏸ 暂停 Harness</div>
+        <button class="close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>确定要暂停当前 Harness 实例吗?</p>
+        <p style="font-size:12px;color:#6b7280;margin-top:8px;">暂停后, 正在执行的任务会完成当前步骤, 但不会派发新任务。可随时恢复。</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="closeModal();alert('Harness 已暂停')">确定暂停</button>
+      </div>
+    `;
+  }
+  mask.style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal-mask').style.display = 'none';
+}
+
+// ============ 初始化 ============
+function init() {
+  document.getElementById('chatBody').innerHTML = messages.map(m => `<div class="bubble ${m.type}">${m.html}</div>`).join('');
+  document.getElementById('chatBody').scrollTop = 999999;
+  switchScene('image');
+  document.getElementById('userInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+}
+
+init();
+</script>
+</body>
+</html>

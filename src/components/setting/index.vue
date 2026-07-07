@@ -30,6 +30,8 @@
           <skillManagement v-if="activeMenu === 'skillManagement'" />
           <devConfig v-if="activeMenu === 'devConfig'" />
           <modelMap v-if="activeMenu === 'modelMap'" />
+          <comfyuiConfig v-if="activeMenu === 'comfyuiConfig'" />
+          <harnessManager v-if="activeMenu === 'harnessManager'" />
         </div>
       </div>
     </div>
@@ -56,6 +58,8 @@ import skillManagement from "./components/skillManagement.vue";
 import devConfig from "./components/devConfig.vue";
 import promptManage from "./components/promptManage.vue";
 import modelMap from "./components/modelMap.vue";
+import comfyuiConfig from "./components/comfyuiConfig.vue";
+import harnessManager from "./components/harnessManager.vue";
 
 const menuItems = [
   { key: "ui", label: "settings.menu.ui", icon: "i-theme" },
@@ -72,6 +76,8 @@ const menuItems = [
   { key: "otherConfig", label: "settings.menu.otherConfig", icon: "i-application-menu" },
   { key: "requestConfig", label: "settings.menu.requestConfig", icon: "i-api" },
   { key: "devConfig", label: "settings.menu.devConfig", icon: "i-flask" },
+  { key: "comfyuiConfig", label: "ComfyUI 配置", icon: "i-robot" },
+  { key: "harnessManager", label: "Harness工程管理", icon: "i-cpu" },
   { key: "about", label: "settings.menu.about", icon: "i-info" },
   { key: "logoutConfig", label: "settings.menu.logoutConfig", icon: "i-logout" },
 ];

@@ -8,6 +8,12 @@
           </template>
           {{ $t("workbench.novel.importText") }}
         </t-button>
+        <t-button theme="success" :disabled="!project?.id" @click="startHarnessFlow">
+          <template #icon>
+            <t-icon name="rocket" />
+          </template>
+          一键 AI 制作
+        </t-button>
         <t-button theme="danger" :disabled="selectedRowKeys.length === 0" @click="handleBatchDelete">
           <template #icon>
             <t-icon name="delete" />
@@ -225,6 +231,27 @@ function importNovelFn() {
 // 处理选择变化
 function handleSelectChange(value: Array<string | number>, context: { selectedRowData: any[] }) {
   selectedRowKeys.value = value.filter(Boolean);
+}
+function startHarnessFlow() {
+  const dialog = DialogPlugin.confirm({
+    header: "一键 AI 制作",
+    body: "将使用当前项目的小说内容，通过 Harness 引擎自动完成剧本、分镜、生图、剪辑、成片流程。",
+    onConfirm: async () => {
+      try {
+        const res = await axios.post("/harness/startFromNovel/", {
+          projectId: project.value?.id,
+          workflowTemplate: "short-drama-production",
+        });
+        window.$message.success("AI 制作流程已启动");
+        window.open(`/#/setting/harness?instance=${res.data?.data?.instanceId || ""}`, "_self");
+        // 触发 setting 页面自动切到 harness 菜单
+        try { localStorage.setItem("harness_active_menu", "harness"); localStorage.setItem("harness_active_instance", res.data?.data?.instanceId || ""); } catch {}
+      } catch (e: any) {
+        window.$message.error(e?.response?.data?.message || e?.message || "启动失败");
+      }
+      dialog.destroy();
+    },
+  });
 }
 // 批量删除
 function handleBatchDelete() {

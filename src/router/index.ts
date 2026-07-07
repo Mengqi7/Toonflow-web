@@ -56,6 +56,14 @@ const router = createRouter({
           component: () => import("@/views/assets/index.vue"),
         },
         {
+          path: "/harness",
+          component: () => import("@/views/production/components/HarnessMonitor.vue"),
+        },
+        {
+          path: "/setting/harness",
+          component: () => import("@/views/setting/index.vue"),
+        },
+        {
           path: "/test",
           component: () => import("@/views/test/index.vue"),
         },
