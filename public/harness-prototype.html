@@ -1,859 +1,1456 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Harness V2 — 导演 Agent 主控台 (原型预览 v2)</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Harness V2 - AI影视工业流水线工厂原型</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fa; color: #1f2937; font-size: 14px; overflow: hidden; }
+  :root {
+    --bg: #071018;
+    --panel: rgba(12, 30, 44, 0.78);
+    --panel-2: rgba(18, 42, 62, 0.86);
+    --line: rgba(87, 228, 255, 0.58);
+    --line-soft: rgba(87, 228, 255, 0.18);
+    --cyan: #4df3ff;
+    --blue: #1588ff;
+    --violet: #c35cff;
+    --green: #61ffbe;
+    --amber: #ffd166;
+    --red: #ff5c9a;
+    --text: #e8f7ff;
+    --muted: #91aabc;
+    --ink: #071018;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background:
+      radial-gradient(circle at 20% 12%, rgba(77, 243, 255, 0.18), transparent 30%),
+      radial-gradient(circle at 82% 30%, rgba(195, 92, 255, 0.15), transparent 26%),
+      linear-gradient(135deg, #061019 0%, #0b1723 46%, #090d18 100%);
+    color: var(--text);
+    overflow: hidden;
+  }
+  button, input { font: inherit; }
+  button { color: inherit; }
+  .app {
+    height: 100vh;
+    min-width: 1180px;
+    display: grid;
+    grid-template-rows: 72px 1fr;
+    padding: 22px 26px 24px;
+    gap: 18px;
+  }
+  .topbar {
+    position: relative;
+    display: grid;
+    grid-template-columns: 330px 1fr auto;
+    align-items: center;
+    gap: 18px;
+    padding: 0 24px;
+    border: 1px solid rgba(121, 212, 255, 0.42);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(16, 35, 50, 0.88), rgba(8, 21, 32, 0.86));
+    box-shadow: 0 0 36px rgba(77, 243, 255, 0.11), inset 0 0 28px rgba(77, 243, 255, 0.05);
+  }
+  .topbar:before {
+    content: "";
+    position: absolute;
+    left: 36%;
+    right: 36%;
+    top: -1px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    box-shadow: 0 0 18px var(--cyan);
+  }
+  .brand-kicker { color: var(--cyan); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+  .brand { font-size: 22px; font-weight: 900; line-height: 1.05; }
+  .mission { min-width: 0; }
+  .mission-title { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mission-meta { margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 12px; }
+  .top-actions { display: flex; gap: 10px; align-items: center; }
+  .chip, .btn {
+    height: 34px;
+    border: 1px solid rgba(110, 203, 255, 0.5);
+    border-radius: 17px;
+    background: rgba(12, 28, 43, 0.72);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    white-space: nowrap;
+  }
+  .chip { color: var(--cyan); box-shadow: inset 0 0 16px rgba(77, 243, 255, 0.1); }
+  .btn { cursor: pointer; }
+  .btn.primary {
+    background: linear-gradient(135deg, rgba(77, 243, 255, 0.95), rgba(21, 136, 255, 0.95));
+    border-color: rgba(77, 243, 255, 0.9);
+    color: #061019;
+    font-weight: 800;
+    box-shadow: 0 0 22px rgba(77, 243, 255, 0.42);
+  }
+  .btn.violet {
+    border-color: rgba(195, 92, 255, 0.9);
+    background: rgba(195, 92, 255, 0.17);
+    box-shadow: inset 0 0 18px rgba(195, 92, 255, 0.18);
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .factory {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 360px minmax(620px, 1fr) 340px;
+    gap: 18px;
+  }
+  .panel {
+    position: relative;
+    min-height: 0;
+    border: 1px solid rgba(97, 219, 255, 0.48);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(13, 33, 49, 0.82), rgba(7, 18, 29, 0.88));
+    box-shadow: 0 0 30px rgba(77, 243, 255, 0.09), inset 0 0 28px rgba(77, 243, 255, 0.04);
+    overflow: hidden;
+  }
+  .panel:after {
+    content: "";
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    width: 18px;
+    height: 18px;
+    border-top: 2px solid var(--cyan);
+    border-right: 2px solid var(--cyan);
+    opacity: 0.8;
+  }
+  .panel-hd {
+    height: 58px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(97, 219, 255, 0.18);
+  }
+  .panel-title { font-size: 20px; font-weight: 900; }
+  .muted { color: var(--muted); }
+  .small { font-size: 12px; }
+  .tag {
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    padding: 2px 9px;
+    font-size: 12px;
+    font-weight: 800;
+    border: 1px solid rgba(130, 214, 255, 0.36);
+    color: var(--muted);
+    background: rgba(116, 172, 210, 0.08);
+  }
+  .tag.run { color: var(--cyan); border-color: rgba(77, 243, 255, 0.72); box-shadow: 0 0 16px rgba(77, 243, 255, 0.18); }
+  .tag.pass { color: var(--green); border-color: rgba(97, 255, 190, 0.58); }
+  .tag.review { color: var(--violet); border-color: rgba(195, 92, 255, 0.68); }
+  .tag.return { color: var(--red); border-color: rgba(255, 92, 154, 0.72); }
+  .tag.wait { color: #6f8799; }
 
-  /* 顶部导航 */
-  .topbar { height: 56px; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; padding: 0 20px; gap: 20px; }
-  .topbar .logo { font-weight: 600; color: #2563eb; display: flex; align-items: center; gap: 8px; }
-  .topbar .logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; }
-  .topbar .project-name { color: #6b7280; font-size: 14px; }
-  .topbar .project-name b { color: #1f2937; }
-  .topbar .actions { display: flex; gap: 8px; margin-left: auto; }
-  .topbar .btn { padding: 6px 12px; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; color: #374151; }
-  .topbar .btn:hover { background: #f9fafb; }
-  .topbar .btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-  .topbar .btn-primary:hover { background: #1d4ed8; }
-  .topbar .btn-danger { color: #dc2626; border-color: #fecaca; }
+  .pipeline { display: grid; grid-template-rows: 58px 1fr; }
+  .station-list {
+    position: relative;
+    overflow: auto;
+    padding: 18px 20px 24px 38px;
+  }
+  .station-list:before {
+    content: "";
+    position: absolute;
+    left: 42px;
+    top: 28px;
+    bottom: 32px;
+    width: 2px;
+    background: linear-gradient(180deg, transparent, var(--cyan), var(--violet), transparent);
+    box-shadow: 0 0 16px rgba(77, 243, 255, 0.5);
+  }
+  .station-list:after {
+    content: "";
+    position: absolute;
+    top: 38px;
+    left: 38px;
+    width: 10px;
+    height: 54px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, transparent, var(--green), transparent);
+    box-shadow: 0 0 18px var(--green);
+    animation: pipeline-scan 5.8s linear infinite;
+  }
+  .group-label {
+    margin: 12px 0 8px 20px;
+    color: var(--cyan);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+  .station {
+    position: relative;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+    margin: 9px 0;
+    padding: 12px 12px 12px 22px;
+    border: 1px solid rgba(90, 194, 245, 0.38);
+    border-radius: 12px;
+    background: rgba(17, 39, 57, 0.72);
+    cursor: pointer;
+    text-align: left;
+  }
+  .station:before {
+    content: "";
+    position: absolute;
+    left: -28px;
+    top: calc(50% - 6px);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 16px var(--cyan), 0 0 28px rgba(77, 243, 255, 0.5);
+    animation: station-pulse 2.8s ease-in-out infinite;
+  }
+  .station:after {
+    content: "";
+    position: absolute;
+    left: -18px;
+    top: 50%;
+    width: 18px;
+    height: 1px;
+    background: var(--cyan);
+    opacity: 0.7;
+  }
+  .station.active {
+    border-color: var(--cyan);
+    background: linear-gradient(90deg, rgba(77, 243, 255, 0.27), rgba(17, 39, 57, 0.72));
+    box-shadow: 0 0 22px rgba(77, 243, 255, 0.28), inset 0 0 18px rgba(77, 243, 255, 0.1);
+  }
+  .station.returned {
+    border-color: rgba(255, 92, 154, 0.72);
+    box-shadow: 0 0 18px rgba(255, 92, 154, 0.16);
+  }
+  .station.returned:before {
+    background: var(--red);
+    box-shadow: 0 0 16px var(--red), 0 0 28px rgba(255, 92, 154, 0.5);
+    animation: return-pulse 1.5s ease-in-out infinite;
+  }
+  .station-name { font-weight: 900; }
+  .station-desc { margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.35; }
 
-  /* 流程导览条 */
-  .flow-nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 10px 20px; display: flex; align-items: center; gap: 4px; overflow-x: auto; }
-  .flow-nav .flow-step { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
-  .flow-nav .flow-step:hover { background: #f3f4f6; }
-  .flow-nav .flow-step.done { background: #d1fae5; color: #047857; }
-  .flow-nav .flow-step.running { background: #fef3c7; color: #b45309; animation: pulse 1.5s ease-in-out infinite; }
-  .flow-nav .flow-step.pending { background: #f3f4f6; color: #9ca3af; }
-  .flow-nav .flow-step.active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
-  .flow-nav .arrow { color: #d1d5db; font-size: 14px; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+  .center {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 1fr 210px;
+    gap: 18px;
+  }
+  .workspace {
+    min-height: 0;
+    overflow: auto;
+    padding: 20px;
+  }
+  .workspace-top {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  h1, h2, h3, p { margin-top: 0; }
+  h1 { font-size: 26px; margin-bottom: 8px; }
+  h2 { font-size: 18px; margin-bottom: 10px; }
+  h3 { font-size: 15px; margin-bottom: 8px; }
+  p { line-height: 1.55; }
+  .scene-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .scene-tabs .btn { height: 30px; font-size: 12px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .quad {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .module {
+    position: relative;
+    min-height: 176px;
+    padding: 14px;
+    border: 1px solid rgba(97, 219, 255, 0.3);
+    border-radius: 14px;
+    background: rgba(9, 26, 40, 0.64);
+    overflow: hidden;
+  }
+  .module:before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    right: 48%;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cyan), transparent);
+  }
+  .module pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #d8f5ff;
+    font-size: 12px;
+    line-height: 1.45;
+    font-family: "Cascadia Mono", Consolas, monospace;
+  }
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .metric {
+    border: 1px solid rgba(97, 219, 255, 0.25);
+    border-radius: 12px;
+    padding: 11px;
+    background: rgba(9, 26, 40, 0.62);
+  }
+  .metric b { display: block; font-size: 22px; color: var(--cyan); }
+  .graph {
+    position: relative;
+    min-height: 310px;
+    border: 1px solid rgba(77, 243, 255, 0.36);
+    border-radius: 16px;
+    background:
+      linear-gradient(90deg, rgba(77, 243, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(77, 243, 255, 0.05) 1px, transparent 1px),
+      rgba(8, 23, 36, 0.68);
+    background-size: 46px 46px;
+    overflow: hidden;
+  }
+  .storyboard-lab {
+    display: grid;
+    grid-template-columns: minmax(380px, 0.9fr) minmax(420px, 1.1fr);
+    gap: 14px;
+  }
+  .script-grid { align-items: stretch; }
+  .script-board { min-height: 260px; }
+  .artifact-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .artifact-card {
+    min-height: 96px;
+    padding: 12px;
+    border: 1px solid rgba(97, 219, 255, 0.28);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(77, 243, 255, 0.12), rgba(195, 92, 255, 0.08)), rgba(7, 18, 30, 0.75);
+  }
+  .artifact-card span, .artifact-card b, .artifact-card p { display: block; }
+  .artifact-card span { color: var(--cyan); font-size: 12px; font-weight: 800; }
+  .artifact-card b { margin-top: 6px; color: var(--text); }
+  .artifact-card p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+  .artifact-card.pass { border-color: rgba(97, 255, 190, 0.5); }
+  .artifact-card.return { border-color: rgba(255, 92, 154, 0.58); }
+  .art-lab {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .art-asset-card {
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr);
+    gap: 14px;
+    min-height: 280px;
+    padding: 14px;
+    border: 1px solid rgba(97, 219, 255, 0.3);
+    border-radius: 16px;
+    background: rgba(9, 26, 40, 0.64);
+    overflow: hidden;
+  }
+  .asset-preview {
+    min-height: 170px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(77, 243, 255, 0.28);
+    border-radius: 14px;
+    background: radial-gradient(circle at 45% 28%, rgba(77, 243, 255, 0.26), transparent 34%), linear-gradient(145deg, rgba(195, 92, 255, 0.2), rgba(6, 18, 30, 0.9));
+    box-shadow: inset 0 0 28px rgba(77, 243, 255, 0.08);
+    color: var(--cyan);
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+  .asset-body { min-width: 0; }
+  .asset-body p { margin: 8px 0; color: #d8f5ff; line-height: 1.55; }
+  .asset-body pre {
+    max-height: 92px;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid rgba(97, 219, 255, 0.18);
+    border-radius: 10px;
+    color: #d8f5ff;
+    background: rgba(2, 12, 20, 0.5);
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .asset-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .asset-head > div { min-width: 0; }
+  .asset-head b { display: block; margin-top: 3px; color: var(--text); font-size: 16px; }
+  .asset-id { display: block; color: var(--cyan); font-size: 11px; font-weight: 900; letter-spacing: 0.4px; }
+  .post-lab {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .post-step {
+    min-height: 260px;
+    padding: 14px;
+    border: 1px solid rgba(97, 219, 255, 0.3);
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(77, 243, 255, 0.08), rgba(195, 92, 255, 0.08)), rgba(9, 26, 40, 0.64);
+  }
+  .post-step.review { border-color: rgba(195, 92, 255, 0.48); }
+  .post-step p { margin: 10px 0; color: #d8f5ff; line-height: 1.55; }
+  .post-step pre {
+    margin: 10px 0 0;
+    padding: 10px;
+    border: 1px solid rgba(97, 219, 255, 0.18);
+    border-radius: 10px;
+    color: #d8f5ff;
+    background: rgba(2, 12, 20, 0.5);
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .post-step-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    align-items: center;
+  }
+  .post-step-head span { color: var(--cyan); font-size: 11px; font-weight: 900; }
+  .post-step-head b { color: var(--text); font-size: 16px; }
+  .post-step-head .tag { grid-row: 1 / span 2; grid-column: 2; font-style: normal; }
+  .loop-map {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .loop-map:before {
+    content: "";
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    top: 50%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--violet), var(--green));
+    background-size: 220% 100%;
+    box-shadow: 0 0 18px rgba(77, 243, 255, 0.34);
+    opacity: 0.55;
+    animation: conveyor-flow 4.8s linear infinite;
+  }
+  .loop-node {
+    position: relative;
+    z-index: 1;
+    min-height: 138px;
+    padding: 14px;
+    border: 1px solid rgba(97, 219, 255, 0.3);
+    border-radius: 16px;
+    background: rgba(7, 18, 30, 0.88);
+    box-shadow: inset 0 0 24px rgba(77, 243, 255, 0.05);
+  }
+  .loop-node span, .loop-node b, .loop-node small { display: block; }
+  .loop-node span { color: var(--cyan); font-size: 11px; font-weight: 900; }
+  .loop-node b { margin-top: 6px; color: var(--text); font-size: 16px; }
+  .loop-node p { margin: 8px 0; color: #d8f5ff; line-height: 1.5; }
+  .loop-node small { color: var(--muted); font-family: "Cascadia Mono", Consolas, monospace; }
+  .loop-node.return { border-color: rgba(255, 92, 154, 0.66); box-shadow: 0 0 18px rgba(255, 92, 154, 0.14); }
+  .loop-node.return:after {
+    content: "reroute";
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    color: var(--red);
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    animation: return-pulse 1.4s ease-in-out infinite;
+  }
+  .loop-node.review { border-color: rgba(195, 92, 255, 0.58); }
+  .loop-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .loop-contract {
+    min-height: 180px;
+    padding: 14px;
+    border: 1px solid rgba(97, 219, 255, 0.3);
+    border-radius: 16px;
+    background: rgba(9, 26, 40, 0.64);
+  }
+  .loop-contract h3 { color: var(--cyan); }
+  .loop-contract p { color: #d8f5ff; line-height: 1.55; }
+  .loop-contract pre {
+    margin: 10px 0 0;
+    padding: 10px;
+    border: 1px solid rgba(97, 219, 255, 0.18);
+    border-radius: 10px;
+    color: #d8f5ff;
+    background: rgba(2, 12, 20, 0.5);
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  @keyframes pipeline-scan {
+    0% { transform: translateY(0); opacity: 0; }
+    8% { opacity: 1; }
+    92% { opacity: 1; }
+    100% { transform: translateY(760px); opacity: 0; }
+  }
+  @keyframes station-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.78; }
+    50% { transform: scale(1.18); opacity: 1; }
+  }
+  @keyframes return-pulse {
+    0%, 100% { opacity: 0.72; }
+    50% { opacity: 1; }
+  }
+  @keyframes conveyor-flow {
+    0% { background-position: 0 0; }
+    100% { background-position: 220% 0; }
+  }
+  .graph-node {
+    position: absolute;
+    width: 170px;
+    padding: 12px;
+    border: 1px solid rgba(130, 214, 255, 0.48);
+    border-radius: 12px;
+    background: rgba(19, 47, 70, 0.88);
+    box-shadow: inset 0 0 18px rgba(77, 243, 255, 0.05);
+  }
+  .graph-node.hot {
+    border-color: var(--cyan);
+    background: rgba(77, 243, 255, 0.16);
+    box-shadow: 0 0 20px rgba(77, 243, 255, 0.24);
+  }
+  .graph-node.bad {
+    border-color: var(--red);
+    background: rgba(255, 92, 154, 0.12);
+  }
+  .wire {
+    position: absolute;
+    height: 2px;
+    transform-origin: left center;
+    background: linear-gradient(90deg, rgba(77, 243, 255, 0.1), var(--cyan), rgba(195, 92, 255, 0.65));
+    box-shadow: 0 0 12px rgba(77, 243, 255, 0.38);
+  }
+  .shot-inspector {
+    min-height: 310px;
+    display: grid;
+    grid-template-rows: auto auto auto auto;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid rgba(195, 92, 255, 0.38);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(15, 30, 49, 0.8), rgba(7, 18, 30, 0.78));
+    box-shadow: inset 0 0 28px rgba(195, 92, 255, 0.07);
+  }
+  .inspector-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .shot-versions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .shot-version {
+    min-height: 64px;
+    display: grid;
+    align-content: end;
+    gap: 4px;
+    padding: 9px;
+    border: 1px solid rgba(97, 219, 255, 0.28);
+    border-radius: 12px;
+    background:
+      linear-gradient(135deg, rgba(77, 243, 255, 0.18), rgba(195, 92, 255, 0.12)),
+      rgba(8, 23, 36, 0.72);
+  }
+  .shot-version.return { border-color: rgba(255, 92, 154, 0.65); box-shadow: 0 0 18px rgba(255, 92, 154, 0.14); }
+  .shot-version.pass { border-color: rgba(97, 255, 190, 0.55); }
+  .shot-version.review { border-color: rgba(195, 92, 255, 0.65); }
+  .inspector-block {
+    padding: 10px;
+    border: 1px solid rgba(97, 219, 255, 0.22);
+    border-radius: 12px;
+    background: rgba(4, 17, 28, 0.58);
+  }
+  .inspector-block pre {
+    margin: 0;
+    color: #d8f5ff;
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: "Cascadia Mono", Consolas, monospace;
+  }
+  .lens-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .lens-grid div {
+    padding: 8px;
+    border-radius: 10px;
+    background: rgba(77, 243, 255, 0.06);
+  }
+  .shot-rail {
+    padding: 16px 18px;
+    overflow: auto hidden;
+    display: grid;
+    grid-template-rows: 28px 1fr;
+    gap: 12px;
+  }
+  .rail-line {
+    position: relative;
+    height: 16px;
+    margin: 5px 12px 0;
+    background: linear-gradient(90deg, var(--cyan), var(--violet), var(--blue));
+    border-radius: 8px;
+    box-shadow: 0 0 16px rgba(77, 243, 255, 0.35);
+  }
+  .rail-line span {
+    position: absolute;
+    top: -5px;
+    width: 10px;
+    height: 26px;
+    border-radius: 8px;
+    background: rgba(232, 247, 255, 0.8);
+    box-shadow: 0 0 10px var(--cyan);
+  }
+  .shots {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 190px;
+    gap: 12px;
+  }
+  .shot {
+    border: 1px solid rgba(97, 219, 255, 0.3);
+    border-radius: 12px;
+    background: rgba(8, 23, 36, 0.72);
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .thumb {
+    height: 78px;
+    background:
+      linear-gradient(135deg, rgba(77, 243, 255, 0.28), rgba(195, 92, 255, 0.2)),
+      linear-gradient(180deg, #14283a, #071018);
+    position: relative;
+  }
+  .thumb:before {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 18px;
+    height: 20px;
+    border: 1px solid rgba(232, 247, 255, 0.25);
+    background: rgba(232, 247, 255, 0.08);
+  }
+  .shot-body { padding: 9px; }
+  .shot-body b { display: block; margin-bottom: 5px; }
+  .shot.active { border-color: var(--violet); box-shadow: 0 0 18px rgba(195, 92, 255, 0.28); }
 
-  /* 主体两列 */
-  .main { display: grid; grid-template-columns: 440px 1fr; height: calc(100vh - 56px - 50px); }
-
-  /* 左侧对话 */
-  .chat-pane { background: #fff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; }
-  .chat-header { padding: 14px 20px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px; }
-  .chat-header .avatar { width: 36px; height: 36px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; }
-  .chat-header .meta .name { font-weight: 600; color: #1f2937; }
-  .chat-header .meta .role { font-size: 12px; color: #6b7280; }
-  .chat-header .status { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #059669; }
-  .chat-header .status::before { content: ""; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px #d1fae5; }
-  .chat-body { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
-  .chat-body::-webkit-scrollbar { width: 6px; }
-  .chat-body::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-  .bubble { max-width: 92%; }
-  .bubble .sender { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
-  .bubble.director .content { background: #eff6ff; border: 1px solid #dbeafe; border-radius: 4px 12px 12px 12px; padding: 10px 14px; color: #1e3a8a; line-height: 1.6; }
-  .bubble.user { align-self: flex-end; }
-  .bubble.user .content { background: #f3f4f6; border-radius: 12px 4px 12px 12px; padding: 10px 14px; color: #1f2937; line-height: 1.6; }
-  .bubble .content strong { color: #1d4ed8; }
-  .bubble .content .link { color: #2563eb; text-decoration: underline; cursor: pointer; }
-  .bubble .content ul { margin: 6px 0 4px 18px; }
-  .bubble .content li { margin: 2px 0; }
-  .bubble .content code { background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
-  .bubble .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-  .bubble .actions .btn-mini { font-size: 12px; padding: 4px 10px; border-radius: 4px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
-  .bubble .actions .btn-mini:hover { background: #f9fafb; }
-  .bubble .actions .btn-mini.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-  .chat-footer { padding: 12px 16px; border-top: 1px solid #f3f4f6; display: flex; gap: 8px; }
-  .chat-footer input { flex: 1; padding: 9px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; outline: none; }
-  .chat-footer input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-  .chat-footer button { padding: 0 16px; background: #2563eb; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
-
-  /* 右侧步骤执行 */
-  .stage-pane { background: #f9fafb; overflow-y: auto; padding: 20px; }
-  .stage-pane::-webkit-scrollbar { width: 8px; }
-  .stage-pane::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-  .stage-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
-  .stage-card .stage-title { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-  .stage-card .stage-title .icon { width: 32px; height: 32px; background: #eff6ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-  .stage-card .stage-title .label { font-weight: 600; color: #1f2937; font-size: 15px; }
-  .stage-card .stage-title .sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
-  .stage-card .stage-title .live { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #059669; }
-  .stage-card .stage-title .live::before { content: ""; width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 1.5s ease-in-out infinite; }
-
-  .pill { display: inline-block; padding: 2px 8px; font-size: 11px; border-radius: 10px; }
-  .pill.green { background: #d1fae5; color: #047857; }
-  .pill.red { background: #fee2e2; color: #b91c1c; }
-  .pill.amber { background: #fef3c7; color: #b45309; }
-  .pill.gray { background: #f3f4f6; color: #6b7280; }
-  .pill.blue { background: #dbeafe; color: #1d4ed8; }
-  .pill.purple { background: #ede9fe; color: #6d28d9; }
-
-  /* 弹窗 (用户确认) */
-  .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-  .modal { background: #fff; border-radius: 12px; max-width: 640px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-  .modal-header { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; }
-  .modal-header .title { font-weight: 600; font-size: 16px; color: #1f2937; }
-  .modal-header .close { width: 28px; height: 28px; border-radius: 6px; border: none; background: #f3f4f6; cursor: pointer; font-size: 16px; }
-  .modal-body { padding: 20px; }
-  .modal-footer { padding: 12px 20px; border-top: 1px solid #f3f4f6; display: flex; gap: 8px; justify-content: flex-end; }
-  .modal-footer .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; font-size: 13px; }
-  .modal-footer .btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-  .modal-footer .btn-danger { color: #dc2626; border-color: #fecaca; }
-
-  /* 通用组件样式 */
-  .step-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
-  .step-tabs .tab { padding: 5px 12px; border: 1px solid #e5e7eb; background: #fff; border-radius: 16px; font-size: 12px; cursor: pointer; color: #6b7280; }
-  .step-tabs .tab.active { background: #2563eb; color: #fff; border-color: #2563eb; }
-
-  /* 剧本行 */
-  .script-row { display: grid; grid-template-columns: 60px 1fr 100px 100px; gap: 12px; padding: 12px 14px; background: #f9fafb; border-radius: 8px; align-items: start; border: 1px solid #f3f4f6; margin-bottom: 8px; }
-  .script-row .scene-no { font-weight: 600; color: #2563eb; font-size: 15px; }
-  .script-row .scene-content { color: #1f2937; font-size: 13px; line-height: 1.6; }
-  .script-row .scene-meta { font-size: 11px; color: #6b7280; }
-
-  /* 角色卡片 */
-  .art-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-  .art-card { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 8px; overflow: hidden; cursor: pointer; }
-  .art-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-  .art-card .thumb { aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; font-size: 38px; }
-  .art-card .info { padding: 10px; }
-  .art-card .info .name { font-weight: 500; color: #1f2937; font-size: 13px; }
-  .art-card .info .meta { font-size: 11px; color: #6b7280; margin-top: 2px; }
-  .art-card .info .status { margin-top: 6px; display: flex; gap: 4px; }
-
-  /* 分镜/图片网格 */
-  .shot-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-  .shot-card { aspect-ratio: 16/9; background: #f3f4f6; border-radius: 6px; position: relative; overflow: hidden; border: 2px solid transparent; cursor: pointer; }
-  .shot-card.done { border-color: #10b981; }
-  .shot-card.running { border-color: #f59e0b; }
-  .shot-card.failed { border-color: #ef4444; }
-  .shot-card.pending { opacity: 0.5; }
-  .shot-card .bg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #9ca3af; }
-  .shot-card .overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); color: #fff; padding: 6px 8px; font-size: 10px; display: flex; justify-content: space-between; }
-
-  /* 审核评分条 */
-  .review-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: #f9fafb; border-radius: 6px; margin-bottom: 4px; }
-  .review-row .name { flex: 0 0 140px; font-size: 13px; color: #1f2937; }
-  .review-row .bar { flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
-  .review-row .bar .fill { height: 100%; background: #10b981; transition: width 0.5s; }
-  .review-row .bar .fill.warn { background: #f59e0b; }
-  .review-row .bar .fill.fail { background: #ef4444; }
-  .review-row .score { flex: 0 0 60px; text-align: right; font-size: 13px; font-weight: 600; }
-
-  /* 任务总览 */
-  .overview { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
-  .overview h3 { font-size: 14px; color: #1f2937; margin-bottom: 12px; }
-  .overview .stats { display: flex; gap: 24px; padding: 12px 0; border-bottom: 1px dashed #e5e7eb; margin-bottom: 12px; flex-wrap: wrap; }
-  .overview .stat .v { font-size: 22px; font-weight: 600; color: #2563eb; }
-  .overview .stat .l { font-size: 11px; color: #6b7280; }
-  .overview .task-list { display: flex; flex-direction: column; gap: 6px; }
-  .overview .task-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 13px; }
-  .overview .task-row .ico { width: 22px; }
-  .overview .task-row .label { flex: 1; }
-  .overview .task-row .status { font-size: 11px; }
-
-  /* 驳回卡片 */
-  .reject-card { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 14px; margin-top: 8px; }
-  .reject-card .title { color: #b91c1c; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
-  .reject-card ul { margin-left: 18px; color: #7f1d1d; font-size: 12px; line-height: 1.7; }
-  .reject-card .buttons { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-  .reject-card .buttons button { font-size: 12px; padding: 5px 10px; border-radius: 4px; border: 1px solid #fecaca; background: #fff; color: #b91c1c; cursor: pointer; }
-  .reject-card .buttons button.primary { background: #dc2626; color: #fff; border-color: #dc2626; }
-  .reject-card .buttons button:hover { background: #fee2e2; }
-
-  /* ComfyUI 参数编辑器 */
-  .comfyui-node { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
-  .comfyui-node h4 { font-size: 13px; color: #374151; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-  .comfyui-node h4 .node-id { font-size: 11px; color: #6b7280; background: #e5e7eb; padding: 1px 6px; border-radius: 4px; }
-  .param-row { display: grid; grid-template-columns: 140px 1fr 120px; gap: 10px; align-items: center; padding: 6px 0; }
-  .param-row .label { font-size: 12px; color: #1f2937; }
-  .param-row .label .required { color: #dc2626; }
-  .param-row .input { font-size: 12px; }
-  .param-row .input input[type="text"], .param-row .input input[type="number"], .param-row .input select { width: 100%; padding: 5px 8px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 12px; }
-  .param-row .input input[type="range"] { width: 100%; }
-  .param-row .inject { font-size: 10px; color: #6b7280; font-family: monospace; }
-
-  /* 版本历史 */
-  .version-list { display: flex; flex-direction: column; gap: 8px; }
-  .version-row { display: grid; grid-template-columns: 60px 80px 1fr 100px 100px; gap: 12px; padding: 10px 12px; background: #f9fafb; border-radius: 6px; align-items: center; border: 1px solid #f3f4f6; }
-  .version-row.current { background: #eff6ff; border-color: #dbeafe; }
-  .version-row .v { font-weight: 600; color: #2563eb; }
-  .version-row .thumb { width: 60px; height: 34px; background: linear-gradient(135deg,#fef3c7,#fde68a); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-  .version-row .info { font-size: 12px; color: #1f2937; }
-  .version-row .info .feedback { font-size: 11px; color: #6b7280; margin-top: 2px; }
-  .version-row .actions { display: flex; gap: 4px; justify-content: flex-end; }
-  .version-row .actions button { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; }
-
-  /* 原型控制 */
-  .demo-controls { position: fixed; bottom: 20px; right: 20px; background: #1f2937; color: #fff; padding: 12px 16px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 8px; z-index: 1000; max-width: 320px; }
-  .demo-controls .demo-title { font-size: 12px; color: #d1d5db; margin-bottom: 4px; }
-  .demo-controls .demo-btns { display: flex; gap: 4px; flex-wrap: wrap; }
-  .demo-controls button { font-size: 11px; padding: 4px 8px; background: #374151; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-  .demo-controls button.active { background: #3b82f6; }
-  .demo-controls button:hover { background: #4b5563; }
-  .demo-controls button.active:hover { background: #2563eb; }
+  .rail-panel {
+    display: grid;
+    grid-template-rows: 58px auto auto 1fr;
+    gap: 14px;
+    padding-bottom: 16px;
+  }
+  .rail-body { padding: 0 16px; overflow: auto; }
+  .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; }
+  .status-card {
+    border: 1px solid rgba(97, 219, 255, 0.25);
+    border-radius: 12px;
+    padding: 12px;
+    background: rgba(9, 26, 40, 0.68);
+  }
+  .status-card b { display: block; font-size: 22px; color: var(--cyan); }
+  .gate {
+    border: 1px solid rgba(195, 92, 255, 0.66);
+    border-radius: 14px;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(195, 92, 255, 0.15), rgba(8, 23, 36, 0.72));
+    box-shadow: inset 0 0 22px rgba(195, 92, 255, 0.1);
+  }
+  .gate-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .audit-list, .event-list, .trace-list { display: grid; gap: 9px; }
+  .storyboard-toolbar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(150px, auto)) minmax(220px, 1fr);
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 12px;
+  }
+  .storyboard-toolbar span {
+    justify-self: end;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .audit-matrix {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .audit-card {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid rgba(97, 219, 255, 0.22);
+    border-radius: 8px;
+    background: linear-gradient(145deg, rgba(6, 22, 34, 0.9), rgba(10, 33, 48, 0.72));
+  }
+  .audit-card.return { border-color: rgba(255,80,112,.6); box-shadow: 0 0 26px rgba(255,80,112,.08); }
+  .audit-card.review { border-color: rgba(195,92,255,.46); }
+  .audit-card header { display:flex; align-items:center; justify-content:space-between; gap:10px; color:var(--muted); font-size:11px; }
+  .audit-card h3 { margin:10px 0; font-size:15px; }
+  .audit-card dl { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0; }
+  .audit-card dt { color:var(--dim); font-size:11px; }
+  .audit-card dd { margin:2px 0 0; color:var(--text); font-size:12px; line-height:1.35; }
+  .audit-card p { margin:10px 0 0; color:var(--muted); font-size:12px; line-height:1.45; }
+  .return-chain { display:grid; gap:8px; }
+  .return-chain span {
+    padding: 10px;
+    border: 1px solid rgba(255, 80, 112, 0.26);
+    border-radius: 8px;
+    color: var(--muted);
+    background: rgba(255, 80, 112, 0.07);
+  }
+  .audit-row, .event, .trace {
+    border: 1px solid rgba(97, 219, 255, 0.22);
+    border-radius: 10px;
+    padding: 10px;
+    background: rgba(9, 26, 40, 0.62);
+  }
+  .audit-row {
+    display: grid;
+    grid-template-columns: 1fr 74px;
+    gap: 8px;
+    align-items: center;
+  }
+  .bar {
+    height: 8px;
+    border-radius: 8px;
+    background: rgba(232, 247, 255, 0.12);
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--green)); }
+  .bar.warn i { background: linear-gradient(90deg, var(--amber), var(--red)); }
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .setting-card {
+    min-height: 122px;
+    border: 1px solid rgba(97, 219, 255, 0.32);
+    border-radius: 14px;
+    padding: 14px;
+    background: rgba(9, 26, 40, 0.66);
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 10;
+    min-width: 320px;
+    max-width: 720px;
+    padding: 12px 16px;
+    border: 1px solid rgba(77, 243, 255, 0.62);
+    border-radius: 14px;
+    background: rgba(6, 16, 25, 0.94);
+    color: var(--text);
+    box-shadow: 0 0 28px rgba(77, 243, 255, 0.22);
+    display: none;
+  }
+  @media (max-width: 1180px) {
+    body { overflow: auto; }
+    .app { min-width: 0; height: auto; min-height: 100vh; padding: 14px; }
+    .topbar, .factory, .center, .quad, .metric-grid, .settings-grid, .storyboard-lab, .art-lab, .post-lab, .loop-map, .loop-grid, .artifact-strip, .audit-matrix, .storyboard-toolbar { grid-template-columns: 1fr; }
+    .art-asset-card { grid-template-columns: 1fr; }
+    .top-actions, .scene-tabs { overflow-x: auto; flex-wrap: nowrap; }
+    .panel { min-height: 360px; }
+    .rail-panel { grid-template-rows: auto; }
+  }
 </style>
 </head>
 <body>
-
-<!-- 顶部导航 -->
-<div class="topbar">
-  <div class="logo"><div class="logo-icon">🎬</div><span>Harness V2</span></div>
-  <div class="project-name">退婚后，我继承万亿家产 <span class="pill blue" style="margin-left:6px;">实例 abc123</span></div>
-  <div class="actions">
-    <button class="btn btn-danger" onclick="showModal('pause-modal')">⏸ 暂停</button>
-    <button class="btn">⚙ 设置</button>
-    <button class="btn btn-primary" onclick="switchScene('versions')">📊 实例历史</button>
-  </div>
-</div>
-
-<!-- 流程导览条 -->
-<div class="flow-nav" id="flowNav">
-  <div class="flow-step done" onclick="switchScene('novel')">📕 小说 <span>✓</span></div>
-  <span class="arrow">→</span>
-  <div class="flow-step done" onclick="switchScene('script')">📝 剧本 <span>8场</span></div>
-  <span class="arrow">→</span>
-  <div class="flow-step done" onclick="switchScene('art')">👥 美术 <span>12+8</span></div>
-  <span class="arrow">→</span>
-  <div class="flow-step done" onclick="switchScene('storyboard')">🎞 分镜 <span>24/24</span></div>
-  <span class="arrow">→</span>
-  <div class="flow-step running" onclick="switchScene('image')">🖼 生图 <span>12/24</span></div>
-  <span class="arrow">→</span>
-  <div class="flow-step pending" onclick="switchScene('video')">🎥 视频 <span>0/24</span></div>
-  <span class="arrow">→</span>
-  <div class="flow-step pending" onclick="switchScene('review')">📋 审核 <span>—</span></div>
-</div>
-
-<!-- 主体 -->
-<div class="main">
-  <!-- 左侧对话 -->
-  <div class="chat-pane">
-    <div class="chat-header">
-      <div class="avatar">🎬</div>
-      <div class="meta">
-        <div class="name">导演 Agent</div>
-        <div class="role" id="directorRole">正在调度 · 已派出 12 个工种任务</div>
+<div class="app">
+  <header class="topbar">
+    <div>
+      <div class="brand-kicker">AI Harness Film Factory</div>
+      <div class="brand">全闭环影视工业流水线</div>
+    </div>
+    <div class="mission">
+      <div class="mission-title">项目：退婚后，我继承万亿家产 · 实例 demo · 工厂中控原型</div>
+      <div class="mission-meta">
+        <span>总进度 66%</span>
+        <span>当前循环 3 次</span>
+        <span>异常 1 项</span>
+        <span>人工终审待确认</span>
       </div>
-      <div class="status">在线</div>
     </div>
-    <div class="chat-body" id="chatBody"></div>
-    <div class="chat-footer">
-      <input type="text" id="userInput" placeholder="对导演说点什么... (Enter 发送)" />
-      <button onclick="sendMessage()">发送</button>
+    <div class="top-actions">
+      <span class="chip">实时 OpenLoop · 运行中</span>
+      <button class="btn" onclick="toast('实例已暂停：当前任务完成后停止派发新工位。')">暂停</button>
+      <button class="btn primary" onclick="setScene('review')">进入终审</button>
     </div>
-  </div>
+  </header>
 
-  <!-- 右侧步骤执行 -->
-  <div class="stage-pane" id="stagePane"></div>
+  <main class="factory">
+    <section class="panel pipeline">
+      <div class="panel-hd">
+        <span class="panel-title">Agent 工位管线</span>
+        <span class="tag run">产物流转</span>
+      </div>
+      <div class="station-list" id="stationList"></div>
+    </section>
+
+    <section class="center">
+      <div class="panel">
+        <div class="workspace">
+          <div class="workspace-top">
+            <div>
+              <h1 id="stationTitle">分镜生图执行 Agent</h1>
+              <p class="muted" id="stationSubtitle">谁生成、谁审核、失败打回给谁，在这里完整串起来。</p>
+            </div>
+            <div class="scene-tabs">
+              <button class="btn primary" onclick="setScene('station')">工位详情</button>
+              <button class="btn" onclick="setScene('script')">剧本专项</button>
+              <button class="btn" onclick="setScene('art')">美术专项</button>
+              <button class="btn" onclick="setScene('storyboard')">分镜专项</button>
+              <button class="btn" onclick="setScene('video')">视频专项</button>
+              <button class="btn" onclick="setScene('post')">音剪成片</button>
+              <button class="btn" onclick="setScene('loop')">闭环总览</button>
+              <button class="btn" onclick="setScene('review')">审核闭环</button>
+              <button class="btn" onclick="setScene('settings')">Agent 设置</button>
+              <button class="btn" onclick="setScene('trace')">追溯链</button>
+            </div>
+          </div>
+
+          <div id="screen-station" class="screen active">
+            <div class="metric-grid">
+              <div class="metric"><span class="small muted">工位状态</span><b id="metricStatus">打回重跑</b></div>
+              <div class="metric"><span class="small muted">产物版本</span><b>v03</b></div>
+              <div class="metric"><span class="small muted">模型调用</span><b>24</b></div>
+              <div class="metric"><span class="small muted">审核评分</span><b>0.72</b></div>
+            </div>
+            <div class="quad">
+              <article class="module">
+                <h2>输入信息区</h2>
+                <pre id="inputBlock"></pre>
+              </article>
+              <article class="module">
+                <h2>工作过程区</h2>
+                <pre id="processBlock"></pre>
+              </article>
+              <article class="module">
+                <h2>产物输出区</h2>
+                <pre id="outputBlock"></pre>
+              </article>
+              <article class="module">
+                <h2>审核闭环区</h2>
+                <pre id="reviewBlock"></pre>
+              </article>
+            </div>
+          </div>
+
+          <div id="screen-script" class="screen">
+            <h2>剧本创作线 / 文本产物透明化</h2>
+            <div class="quad script-grid">
+              <article class="module script-board">
+                <h2>输入原文与导演调度</h2>
+                <pre>原著输入：第 03 场，慈善宴会厅。女主被男配当众递出收购合同，众人等待她低头签字。
+导演调度：改成 90s 竖屏短剧关键反击段，节奏冷、贵、快，保留人物克制和宴会厅压迫感。
+风格约束：都市复仇 / 高级冷感 / 台词短句 / 每个镜头都能转化为分镜与视频动作。</pre>
+              </article>
+              <article class="module script-board">
+                <h2>剧本改编 Agent 输出</h2>
+                <pre>产物 ID: SCR-S03-v02
+生成 Agent: 剧本改编 Agent
+模型: ScriptForge-Drama v3
+
+场 03 / 内景 / 慈善宴会厅 / 夜
+人群的谈笑在女主入场后降低。男配将合同推到桌面中央，故意让镜头和宾客都看见。
+女主没有立刻坐下，她看了一眼合同封面，又看向男配身后的董事席。
+冲突目标：男配要她当众签字；女主要借这份合同反向公开男配的资金漏洞。</pre>
+              </article>
+              <article class="module script-board">
+                <h2>台词打磨 Agent 输出</h2>
+                <pre>产物 ID: DLG-S03-v02
+生成 Agent: 台词打磨 Agent
+模型: DialoguePolish v2
+
+男配：签了它，你今晚还能体面离开。
+女主：（停顿 0.8s，低头看合同）体面？
+女主：（把合同推回去）你该担心的，是明天早上谁还能进董事会。
+男配：（笑容凝固）你什么意思？
+女主：合同第七页，资金担保人不是你。是你最怕我见到的人。</pre>
+              </article>
+              <article class="module script-board">
+                <h2>剧本内容审核闭环</h2>
+                <pre>审核 Agent: 剧本内容审核 Agent
+审核对象: SCR-S03-v02 + DLG-S03-v02
+评分: 0.91 / 通过
+修正记录: v01 台词解释过多 -> 打回台词打磨 Agent；v02 缩短句长并加入停顿与动作标注后通过。
+下游: 分镜脚本 Agent</pre>
+              </article>
+            </div>
+            <div class="artifact-strip">
+              <div class="artifact-card pass"><span>SCR-S03-v02</span><b>影视剧本</b><p>剧本改编 Agent · 剧本内容审核通过 · 写回 o_script</p></div>
+              <div class="artifact-card pass"><span>DLG-S03-v02</span><b>精修台词</b><p>台词打磨 Agent · 含语气/停顿/语速 · 下游分镜脚本</p></div>
+              <div class="artifact-card return"><span>RPT-SCR-S03-v01</span><b>审核报告</b><p>v01 台词解释过多，已打回并生成修正意见</p></div>
+            </div>
+          </div>
+
+          <div id="screen-art" class="screen">
+            <h2>美术设定线 / 角色服化道场景资产工厂</h2>
+            <div class="art-lab">
+              <article class="art-asset-card">
+                <div class="asset-preview">CHR</div>
+                <div class="asset-body"><div class="asset-head"><div><span class="asset-id">CHR-02-v04</span><b>女主角色设定卡</b></div><span class="tag pass">通过</span></div><p>27 岁，冷静复仇气质，黑色礼服、锐利眼神、低饱和妆容；所有分镜与视频必须锁定侧脸轮廓、发型和礼服材质。</p><div class="lens-grid"><span><b>生成 Agent</b><small>角色设定 Agent</small></span><span><b>审核 Agent</b><small>角色设定审核 Agent</small></span><span><b>模型</b><small>CharacterBible v2.4</small></span><span><b>存储位</b><small>美术资产库 / 角色设定目录</small></span></div><pre>visual bible, heroine, obsidian dress, restrained revenge, sharp side profile, cold luxury makeup, consistent facial landmarks</pre><p class="muted">审核通过：特征辨识度高，一致性约束完整；作为分镜生图与视频参考锁。</p></div>
+              </article>
+              <article class="art-asset-card">
+                <div class="asset-preview">CST</div>
+                <div class="asset-body"><div class="asset-head"><div><span class="asset-id">CST-02-v02</span><b>服化道设计稿</b></div><span class="tag review">审核中</span></div><p>黑色缎面礼服、银色耳饰、无品牌手包；道具包含合同、红酒杯、黑卡，强调桌面反光与压迫构图。</p><div class="lens-grid"><span><b>生成 Agent</b><small>服化道设计 Agent</small></span><span><b>审核 Agent</b><small>场景道具审核 Agent</small></span><span><b>模型</b><small>CostumeProp v1.9</small></span><span><b>存储位</b><small>美术资产库 / 服化道目录</small></span></div><pre>costume prop sheet, black satin evening dress, silver minimal earrings, contract folder, premium black card, cold reflective table props</pre><p class="muted">审核中：道具合理性通过，礼服袖口纹理需标注为视频锁定区域。</p></div>
+              </article>
+              <article class="art-asset-card">
+                <div class="asset-preview">SCN</div>
+                <div class="asset-body"><div class="asset-head"><div><span class="asset-id">SCN-04-v01</span><b>宴会厅场景概念</b></div><span class="tag pass">通过</span></div><p>冷金色宴会厅，纵深走廊、低照度桌面反光、远处宾客形成压力背景，适合作为分镜与视频连续空间。</p><div class="lens-grid"><span><b>生成 Agent</b><small>场景概念 Agent</small></span><span><b>审核 Agent</b><small>场景道具审核 Agent</small></span><span><b>模型</b><small>SceneConcept v2.2</small></span><span><b>存储位</b><small>美术资产库 / 场景设定目录</small></span></div><pre>luxury banquet hall, cold gold palette, deep perspective, reflective long table, guests as pressure silhouettes, cinematic rim light</pre><p class="muted">审核通过：空间逻辑清晰，光影参数可复用到分镜与视频。</p></div>
+              </article>
+              <article class="art-asset-card">
+                <div class="asset-preview">LOOK</div>
+                <div class="asset-body"><div class="asset-head"><div><span class="asset-id">ART-LOOK-02-v03</span><b>角色入场景衍生图</b></div><span class="tag return">打回</span></div><p>将 CHR-02 角色、CST-02 服化道与 SCN-04 宴会厅合成，用于验证角色进场景后的服装材质和光影一致性。</p><div class="lens-grid"><span><b>生成 Agent</b><small>衍生图合成 Agent</small></span><span><b>审核 Agent</b><small>图片质量审核 Agent</small></span><span><b>模型</b><small>ImageForge-Cine v2.8</small></span><span><b>存储位</b><small>美术资产库 / 衍生图目录</small></span></div><pre>heroine in obsidian dress standing in cold luxury banquet hall, consistent face CHR-02, satin sleeve texture, reflective table foreground, cinematic depth</pre><p class="muted">未通过：袖口纹理与视频阶段可能闪烁，打回衍生图合成 Agent 生成 v04，并补充 sleeve texture lock。</p></div>
+              </article>
+            </div>
+          </div>
+
+          <div id="screen-storyboard" class="screen">
+            <h2>分镜生产线 / 镜头级透明化</h2>
+            <div class="storyboard-toolbar">
+              <button class="btn primary">批量查看提示词合规报告</button>
+              <button class="btn violet">批量触发重生成</button>
+              <button class="btn">批量调整一致性约束</button>
+              <span>当前批次：shot_09 - shot_14 / 6 镜头 / 1 个打回闭环</span>
+            </div>
+            <div class="storyboard-lab">
+              <div class="graph">
+                <div class="wire" style="left:170px;top:84px;width:220px;transform:rotate(20deg)"></div>
+                <div class="wire" style="left:390px;top:160px;width:220px;transform:rotate(-14deg)"></div>
+                <div class="wire" style="left:260px;top:248px;width:270px;transform:rotate(-6deg)"></div>
+                <div class="graph-node hot" style="left:28px;top:34px"><b>分镜脚本</b><p class="small muted">S03 拆为 4 个镜头</p></div>
+                <div class="graph-node" style="left:288px;top:120px"><b>提示词优化</b><p class="small muted">正向/负向/一致性约束</p></div>
+                <div class="graph-node bad" style="right:34px;top:66px"><b>图片质量审核</b><p class="small muted">shot_12 角色视线偏移</p></div>
+                <div class="graph-node hot" style="left:92px;bottom:34px"><b>分镜生图执行</b><p class="small muted">模型: ImageForge-Cine v2.8</p></div>
+                <div class="graph-node" style="right:92px;bottom:38px"><b>版本归档</b><p class="small muted">v01/v02/v03 对比</p></div>
+              </div>
+              <aside class="shot-inspector">
+                <div class="inspector-head">
+                  <span class="tag return" id="shotStatusTag">打回</span>
+                  <b id="shotInspectorTitle">shot_12 · 中近景 · 04s</b>
+                </div>
+                <div class="shot-versions" id="shotVersions"></div>
+                <div class="inspector-block">
+                  <h3>分镜文字 / 镜头语言</h3>
+                  <p class="muted" id="shotScript"></p>
+                  <div class="lens-grid" id="shotLensGrid"></div>
+                </div>
+                <div class="inspector-block">
+                  <h3>提示词与模型调用</h3>
+                  <pre id="shotPromptBlock"></pre>
+                </div>
+                <div class="inspector-block">
+                  <h3>参考资产 / 审核闭环</h3>
+                  <pre id="shotReviewBlock"></pre>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <div id="screen-video" class="screen">
+            <h2>视频生产线 / 单镜片段透明化</h2>
+            <div class="storyboard-lab">
+              <div class="graph">
+                <div class="wire" style="left:170px;top:84px;width:220px;transform:rotate(20deg)"></div>
+                <div class="wire" style="left:390px;top:160px;width:220px;transform:rotate(-14deg)"></div>
+                <div class="wire" style="left:260px;top:248px;width:270px;transform:rotate(-6deg)"></div>
+                <div class="graph-node hot" style="left:28px;top:34px"><b>已审分镜图</b><p class="small muted">ART-SB-012-v04 作为视频首帧参考</p></div>
+                <div class="graph-node hot" style="left:288px;top:120px"><b>视频生成 Agent</b><p class="small muted">动效提示词 / 运动强度 / 镜头锁定</p></div>
+                <div class="graph-node bad" style="right:34px;top:66px"><b>视频质量审核</b><p class="small muted">检测闪烁、角色漂移、动作断裂</p></div>
+                <div class="graph-node" style="left:92px;bottom:34px"><b>一致性校验</b><p class="small muted">跨镜头角色、服装、色调比对</p></div>
+                <div class="graph-node" style="right:92px;bottom:38px"><b>片段写回</b><p class="small muted">o_video_clip + 版本链 + 审核报告</p></div>
+              </div>
+              <aside class="shot-inspector">
+                <div class="inspector-head">
+                  <span class="tag review">需复核</span>
+                  <b>clip_12 · 04s · 24fps</b>
+                </div>
+                <div class="shot-versions">
+                  <span class="shot-version review"><b>v02</b><small>需复核</small></span>
+                  <span class="shot-version return"><b>v01</b><small>眼神漂移</small></span>
+                  <span class="shot-version pass"><b>ref</b><small>分镜首帧</small></span>
+                </div>
+                <div class="inspector-block">
+                  <h3>输入与参考资产</h3>
+                  <p class="muted">承接 shot_12 主选分镜，女主将合同从前景推回男配方向，镜头轻微推近，动作克制但压迫感增强。</p>
+                  <div class="lens-grid">
+                    <span><b>首帧参考</b><small>ART-SB-012-v04 / 已通过图片质量审核</small></span>
+                    <span><b>镜头运动</b><small>slow push-in, table foreground parallax</small></span>
+                    <span><b>动作节奏</b><small>0-18f 停顿，19-56f 推回合同，57-96f 锁定眼神</small></span>
+                    <span><b>一致性锁定</b><small>CHR-02 + SCN-04 + PROP-contract-v01</small></span>
+                  </div>
+                </div>
+                <div class="inspector-block">
+                  <h3>动效提示词与模型参数</h3>
+                  <pre>模型: MotionForge-Cine v1.4
+参数: 4s / 24fps / 1344x768 / motion strength 0.46 / camera lock 0.72 / seed 901244
+动效提示词:
+cinematic restrained motion, heroine pushes contract back across glossy table, cold rim light stays consistent, foreground document slides with natural friction, gaze remains locked to male antagonist
+
+负向约束:
+face morphing, sleeve flicker, hand deformation, camera jump, scene melting, inconsistent costume, unstable lighting</pre>
+                </div>
+                <div class="inspector-block">
+                  <h3>输出片段 / 审核闭环</h3>
+                  <pre>输出产物: VID-SB-012-v02 / o_video_clip / preview frames 96 / retry=1
+审核 Agent: 视频质量审核 Agent
+审核意见: 角色脸部与场景一致性通过；第 62-78 帧袖口纹理轻微闪烁，合同滑动轨迹通过。
+打回指令: 锁定衣袖纹理区域，motion strength 从 0.46 降至 0.38，保留首帧 ART-SB-012-v04 与 seed 901244 的构图约束。</pre>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <div id="screen-post" class="screen">
+            <h2>音剪合成线 / 从单镜片段到成片验收</h2>
+            <div class="post-lab">
+              <article class="post-step pass">
+                <div class="post-step-head"><span>VOX-S03-v02</span><b>配音生成 Agent</b><em class="tag pass">通过</em></div>
+                <p>按终版台词、角色人设和情绪标注生成逐镜头配音，保留音色、语速、停顿和情绪曲线。</p>
+                <div class="lens-grid"><span><b>输入</b><small>DLG-S03-v02 + CHR-02-v04 + 情绪标注</small></span><span><b>输出</b><small>逐镜配音音频 / o_audio_voice / 12 条台词片段</small></span><span><b>模型/工具</b><small>VoiceCast-Pro v2.1</small></span><span><b>审核/下游</b><small>音画同步审核 Agent: 台词长度与镜头时长匹配</small></span></div>
+                <pre>女主音色: cold alto / speed 0.92 / pause 0.8s
+男配音色: polished baritone / pressure 0.76
+retry: v01 情绪过满 -> v02 收敛通过</pre>
+              </article>
+              <article class="post-step pass">
+                <div class="post-step-head"><span>BGM-S03-v01</span><b>配乐适配 Agent</b><em class="tag pass">通过</em></div>
+                <p>根据剧情节奏与反击情绪曲线生成低频弦乐与冷金属质感环境音，标注转场点。</p>
+                <div class="lens-grid"><span><b>输入</b><small>全片节奏曲线 + 分镜脚本 + 视频片段粗剪</small></span><span><b>输出</b><small>配乐音轨 / 环境音效素材 / 情绪节点表</small></span><span><b>模型/工具</b><small>ScoreMatch-Cine v1.7</small></span><span><b>审核/下游</b><small>音画同步审核 Agent: 情绪转折点匹配 shot_12 推合同动作</small></span></div>
+                <pre>cue_01 宴会低频 0-22s
+cue_02 反击上升 23-51s
+cue_03 黑卡落点 52-62s</pre>
+              </article>
+              <article class="post-step review">
+                <div class="post-step-head"><span>CUT-S03-v03</span><b>剪辑合成 Agent</b><em class="tag review">待终验</em></div>
+                <p>按分镜顺序拼接单镜视频，接入配音配乐，添加关键转场和黑卡信息揭示字幕。</p>
+                <div class="lens-grid"><span><b>输入</b><small>VID-SB-009~014 + VOX-S03-v02 + BGM-S03-v01</small></span><span><b>输出</b><small>FILM-S03-final-v03 / 剪辑工程文件 / 90s 样片</small></span><span><b>模型/工具</b><small>EditAssembler v1.3</small></span><span><b>审核/下游</b><small>总监制 Agent: 等待人工最终验收</small></span></div>
+                <pre>写回: o_final_video
+音画同步分数: 0.88
+待复核: shot_12 袖口纹理闪烁是否影响成片观感</pre>
+              </article>
+              <article class="post-step review">
+                <div class="post-step-head"><span>RPT-FINAL-S03-v03</span><b>总监制终验</b><em class="tag review">人工终审</em></div>
+                <p>汇总剧本、美术、分镜、视频、音画同步和剪辑报告，给出通过、打回或人工修改后再审决策。</p>
+                <div class="lens-grid"><span><b>输入</b><small>全链路版本链 + 专项审核报告 + 成片预览</small></span><span><b>输出</b><small>成片验收结论 / 返工任务图 / 版本归档</small></span><span><b>模型/工具</b><small>SupervisorQA v2.0</small></span><span><b>审核/下游</b><small>人工制片人: 待决策</small></span></div>
+                <pre>可选动作: 通过成片 / 打回视频生成 Agent / 打回剪辑合成 Agent / 人工修改后再审</pre>
+              </article>
+            </div>
+          </div>
+
+          <div id="screen-loop" class="screen">
+            <h2>自驱闭环 Loop / 产物流转与返工主控图</h2>
+            <div class="loop-map">
+              <article class="loop-node pass"><span>01</span><b>人工输入</b><p>原著/创意/风格/成片标准进入总导演调度。</p><small>director.message</small></article>
+              <article class="loop-node pass"><span>02</span><b>任务规划</b><p>总导演生成 TaskGraph，拆分剧本、美术、分镜、视频、音剪线。</p><small>taskgraph.created</small></article>
+              <article class="loop-node run"><span>03</span><b>Agent 执行</b><p>各生产 Agent 产出剧本、设定、提示词、图像、视频、音频。</p><small>task.started / task.completed</small></article>
+              <article class="loop-node pass"><span>04</span><b>业务回写</b><p>CallbackBridge 写回 Toonflow 业务表并生成版本元数据。</p><small>callback.persisted / version.created</small></article>
+              <article class="loop-node review"><span>05</span><b>专项审核</b><p>剧本/角色/场景/提示词/图片/视频/音画同步逐项打分。</p><small>review.scored</small></article>
+              <article class="loop-node return"><span>06</span><b>打回重跑</b><p>未通过则生成 retryInstruction，原路或跨工种打回。</p><small>review.reroute</small></article>
+              <article class="loop-node review"><span>07</span><b>总监制复核</b><p>阶段完成后汇总报告，判断是否进入人工终审。</p><small>director.user_input_required</small></article>
+              <article class="loop-node review"><span>08</span><b>人工终审</b><p>用户只在关键门禁决定通过、打回、暂停或人工修改后再审。</p><small>director.user_input</small></article>
+              <article class="loop-node pass"><span>09</span><b>归档推进</b><p>通过后解锁下一生产线，所有版本进入追溯链。</p><small>stage.approved</small></article>
+            </div>
+            <div class="loop-grid">
+              <article class="loop-contract"><h3>单节点自循环</h3><p>每个生产 Agent 都必须被专属审核 Agent 校验，不通过自动回到原生产工位。</p><pre>分镜生图执行 Agent -> 图片质量审核 Agent -> 未通过 -> retryInstruction -> 分镜生图执行 Agent v04</pre></article>
+              <article class="loop-contract"><h3>跨工种打回</h3><p>如果问题根因来自上游设定，质量监制可跨工种打回，而不是只重跑当前节点。</p><pre>图片质量审核发现空间纵深不足 -> review.reroute -> 场景概念 Agent 补充 SCN-04 光影/纵深 -> 分镜提示词优化 Agent 重写约束</pre></article>
+              <article class="loop-contract"><h3>环节终审门禁</h3><p>剧本、美术、分镜、视频、成片阶段完成后，由总监制汇总并请求人工终审。</p><pre>专项审核全通过 -> 总监制 Agent 汇总 -> director.user_input_required -> 用户通过 -> 解锁下一生产线</pre></article>
+              <article class="loop-contract"><h3>全链路追溯</h3><p>每个产物带生成 Agent、审核 Agent、模型、版本、retry、业务表和历史审核记录。</p><pre>CUT-S03-v03 -> VOX-S03-v02 / BGM-S03-v01 / VID-SB-012-v02 / ART-SB-012-v04 / PRM-SB-012-v02 / CHR-02-v04</pre></article>
+            </div>
+          </div>
+
+          <div id="screen-review" class="screen">
+            <h2>审核指挥台 / 专项审核矩阵 + 打回责任链</h2>
+            <p class="muted">每一条审核都明确审核 Agent、审核对象、核心维度、打回对接 Agent、当前产物、修正意见与循环次数，方便定位是谁生成、谁审核、失败后回到谁。</p>
+            <div class="audit-matrix">
+              <article class="audit-card pass"><header><span>SCR-S03-v02 / DLG-S03-v02</span><b class="tag pass">通过</b></header><h3>剧本内容审核 Agent</h3><dl><div><dt>核心维度</dt><dd>剧情逻辑、人物动机、台词可拍摄性</dd></div><div><dt>打回对接</dt><dd>剧本改编 / 台词打磨</dd></div><div><dt>当前产物</dt><dd>RPT-SCR-S03-v01</dd></div><div><dt>循环次数</dt><dd>1 次</dd></div></dl><p>v01 台词解释过多，已缩短句长并补动作停顿。</p></article>
+              <article class="audit-card pass"><header><span>CHR-02-v04</span><b class="tag pass">通过</b></header><h3>角色设定审核 Agent</h3><dl><div><dt>核心维度</dt><dd>人设统一、特征辨识度、年龄匹配</dd></div><div><dt>打回对接</dt><dd>角色设定 Agent</dd></div><div><dt>当前产物</dt><dd>RPT-CHR-02-v04</dd></div><div><dt>循环次数</dt><dd>0 次</dd></div></dl><p>角色锁定特征完整，可作为分镜和视频参考锁。</p></article>
+              <article class="audit-card pass"><header><span>CST-02-v02 / SCN-04-v01</span><b class="tag pass">通过</b></header><h3>场景道具审核 Agent</h3><dl><div><dt>核心维度</dt><dd>服化道合理性、空间、光影、道具叙事</dd></div><div><dt>打回对接</dt><dd>服化道 / 场景概念</dd></div><div><dt>当前产物</dt><dd>RPT-SCN-04-v01</dd></div><div><dt>循环次数</dt><dd>1 次</dd></div></dl><p>已补充礼服袖口纹理锁定和桌面反光约束。</p></article>
+              <article class="audit-card pass"><header><span>SB-S03-script-v02</span><b class="tag pass">通过</b></header><h3>分镜逻辑审核 Agent</h3><dl><div><dt>核心维度</dt><dd>镜头叙事、景别、运镜、台词对应</dd></div><div><dt>打回对接</dt><dd>分镜脚本 Agent</dd></div><div><dt>当前产物</dt><dd>RPT-SB-S03-v02</dd></div><div><dt>循环次数</dt><dd>0 次</dd></div></dl><p>shot_09 到 shot_14 节奏连续，允许进入提示词优化。</p></article>
+              <article class="audit-card pass"><header><span>PRM-SB-012-v02</span><b class="tag pass">通过</b></header><h3>提示词合规审核 Agent</h3><dl><div><dt>核心维度</dt><dd>提示词精确度、一致性约束、负面词</dd></div><div><dt>打回对接</dt><dd>分镜提示词优化 Agent</dd></div><div><dt>当前产物</dt><dd>RPT-PRM-012-v02</dd></div><div><dt>循环次数</dt><dd>0 次</dd></div></dl><p>正向 186 token、负向 42 token，角色和场景锁定项完整。</p></article>
+              <article class="audit-card return"><header><span>ART-SB-012-v03</span><b class="tag return">打回</b></header><h3>图片质量审核 Agent</h3><dl><div><dt>核心维度</dt><dd>画面质量、无崩坏、角色一致性、去 AI 痕迹</dd></div><div><dt>打回对接</dt><dd>分镜生图执行 Agent</dd></div><div><dt>当前产物</dt><dd>RPT-IMG-012-v03</dd></div><div><dt>循环次数</dt><dd>2 次</dd></div></dl><p>视线方向与台词情绪不一致，前景纵深不足；强化 gaze target 与 foreground depth 后生成 v04。</p></article>
+              <article class="audit-card review"><header><span>VID-SB-012-v02</span><b class="tag review">需复核</b></header><h3>视频质量审核 Agent</h3><dl><div><dt>核心维度</dt><dd>动作连贯、无闪烁、角色一致、镜头语言</dd></div><div><dt>打回对接</dt><dd>视频生成 Agent</dd></div><div><dt>当前产物</dt><dd>RPT-VID-012-v02</dd></div><div><dt>循环次数</dt><dd>1 次</dd></div></dl><p>第 62-78 帧袖口纹理轻微闪烁；建议锁定纹理并降低 motion strength。</p></article>
+              <article class="audit-card pass"><header><span>VOX-S03-v02 / BGM-S03-v01</span><b class="tag pass">通过</b></header><h3>音画同步审核 Agent</h3><dl><div><dt>核心维度</dt><dd>口型节奏、情绪匹配、音质、环境音效</dd></div><div><dt>打回对接</dt><dd>配音生成 / 配乐适配</dd></div><div><dt>当前产物</dt><dd>RPT-AUD-S03-v02</dd></div><div><dt>循环次数</dt><dd>1 次</dd></div></dl><p>台词停顿与 shot_12 推合同动作同步，黑卡落点已对齐。</p></article>
+              <article class="audit-card review"><header><span>FILM-S03-final-v03</span><b class="tag review">待终审</b></header><h3>总监制 Agent</h3><dl><div><dt>核心维度</dt><dd>全局质量、跨环节一致性、风格统一</dd></div><div><dt>打回对接</dt><dd>对应上游 Agent</dd></div><div><dt>当前产物</dt><dd>RPT-FINAL-S03-v03</dd></div><div><dt>循环次数</dt><dd>3 次</dd></div></dl><p>建议人工确认 shot_12 图片/视频风险是否影响成片质感。</p></article>
+            </div>
+            <div class="quad">
+              <article class="module">
+                <h2>失败样本定位</h2>
+                <div class="return-chain">
+                  <span>01 图片质量审核 Agent 标记 ART-SB-012-v03 未通过</span>
+                  <span>02 总监制 Agent 判定根因来自镜头构图与场景纵深</span>
+                  <span>03 原路打回分镜生图执行 Agent，同时通知场景概念 Agent 补充空间约束</span>
+                  <span>04 生成 v04 后重新进入提示词合规审核与图片质量审核</span>
+                </div>
+              </article>
+              <article class="module">
+                <h2>打回重跑链路</h2>
+                <pre>问题产物: storyboard_image.shot_12.v03
+审核 Agent: 图片质量审核 Agent
+打回对象: 分镜生图执行 Agent
+打回原因: 人物视线方向与台词情绪不一致，前景纵深不足。
+修正要求: 保留角色设定卡 CHR-02；重写构图约束；参考场景 SCN-04 光影。
+触发事件: review.reroute -> task.started</pre>
+              </article>
+              <article class="module">
+                <h2>人工终审决策</h2>
+                <p class="muted">每个按钮都会写入用户决策，并模拟 DirectorOrchestrator 更新任务图。</p>
+                <div class="scene-tabs">
+                  <button class="btn primary" onclick="decide('通过分镜阶段，解锁视频生产线')">通过</button>
+                  <button class="btn violet" onclick="decide('打回分镜生图执行 Agent 重跑 shot_12')">打回原工位</button>
+                  <button class="btn violet" onclick="decide('跨工种打回场景概念 Agent 补充空间纵深')">跨工种打回</button>
+                  <button class="btn" onclick="decide('人工修改后再审')">人工修改后再审</button>
+                  <button class="btn" onclick="decide('暂停流程并补充导演指令')">暂停并补充指令</button>
+                </div>
+              </article>
+              <article class="module">
+                <h2>事件流</h2>
+                <div class="event-list" id="eventList">
+                  <div class="event">review.scored / image_quality / 0.68</div>
+                  <div class="event">director.user_input_required / storyboard_gate</div>
+                  <div class="event">version.created / storyboard_image.shot_12.v03</div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div id="screen-settings" class="screen">
+            <h2>Harness Agent 在线配置 / Toonflow 设置中心入口</h2>
+            <div class="settings-grid">
+              <div class="setting-card"><h3>Agent 配置</h3><p class="muted">编辑 system prompt、职责边界、上下游契约、打回策略。</p><button class="btn primary">编辑</button></div>
+              <div class="setting-card"><h3>模型映射</h3><p class="muted">为生图、视频、配音、审核选择抽象模型服务。</p><button class="btn primary">编辑</button></div>
+              <div class="setting-card"><h3>提示词库</h3><p class="muted">管理分镜、镜头、角色一致性、负面词模板。</p><button class="btn primary">编辑</button></div>
+              <div class="setting-card"><h3>Skills 技能</h3><p class="muted">绑定剧本解析、视觉审核、音画同步等技能。</p><button class="btn primary">编辑</button></div>
+              <div class="setting-card"><h3>记忆配置</h3><p class="muted">维护项目风格、角色设定、历史打回经验。</p><button class="btn primary">编辑</button></div>
+              <div class="setting-card"><h3>二期生成后端插件</h3><p class="muted">当前只保留边界说明；后续接入具体生成后端。</p><button class="btn">查看边界</button></div>
+            </div>
+          </div>
+
+          <div id="screen-trace" class="screen">
+            <h2>全链路产物追溯</h2>
+            <div class="trace-list">
+              <div class="trace"><b>ART-SB-012-v03</b><p class="muted">生成: 分镜生图执行 Agent · 审核: 图片质量审核 Agent · 模型: ImageForge-Cine v2.8 · seed 481922 · retry 2</p></div>
+              <div class="trace"><b>PRM-SB-012-v02</b><p class="muted">生成: 分镜提示词优化 Agent · 审核: 提示词合规审核 Agent · 正向 186 token · 负向 42 token</p></div>
+              <div class="trace"><b>VID-SB-012-v02</b><p class="muted">生成: 视频生成 Agent · 审核: 视频质量审核 Agent · 模型: MotionForge-Cine v1.4 · reference ART-SB-012-v04 · retry 1</p></div>
+              <div class="trace"><b>VOX-S03-v02</b><p class="muted">生成: 配音生成 Agent · 审核: 音画同步审核 Agent · 模型: VoiceCast-Pro v2.1 · 女主 cold alto</p></div>
+              <div class="trace"><b>CUT-S03-v03</b><p class="muted">生成: 剪辑合成 Agent · 审核: 总监制 Agent · 成片 FILM-S03-final-v03 · 待人工终审</p></div>
+              <div class="trace"><b>SCN-04-v01</b><p class="muted">生成: 场景概念 Agent · 审核: 场景道具审核 Agent · 暮色宴会厅 · 逆光 · 纵深走廊</p></div>
+              <div class="trace"><b>CHR-02-v04</b><p class="muted">生成: 角色设定 Agent · 审核: 角色设定审核 Agent · 黑色礼服 · 冷静克制 · 侧脸识别特征</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="panel shot-rail">
+        <div class="rail-line"><span style="left:3%"></span><span style="left:28%"></span><span style="left:52%"></span><span style="left:76%"></span><span style="left:96%"></span></div>
+        <div class="shots" id="shotList"></div>
+      </section>
+    </section>
+
+    <aside class="panel rail-panel">
+      <div class="panel-hd"><span class="panel-title">审核 / 监控环</span><span class="tag review">待终审</span></div>
+      <div class="status-grid">
+        <div class="status-card"><span class="small muted">总进度</span><b>66%</b></div>
+        <div class="status-card"><span class="small muted">循环次数</span><b>3</b></div>
+        <div class="status-card"><span class="small muted">活动工位</span><b>7</b></div>
+        <div class="status-card"><span class="small muted">异常</span><b>1</b></div>
+      </div>
+      <div class="rail-body">
+        <div class="gate">
+          <h2>分镜阶段终审</h2>
+          <p class="muted">总监制建议：打回分镜生图执行 Agent 重跑 shot_12，保留角色与场景约束。</p>
+          <div class="gate-actions">
+            <button class="btn primary" onclick="decide('通过分镜阶段')">通过</button>
+            <button class="btn violet" onclick="setScene('review')">查看详情</button>
+          </div>
+        </div>
+      </div>
+      <div class="rail-body">
+        <h2>审核矩阵</h2>
+        <div class="audit-list">
+          <div class="audit-row"><div>剧本内容审核</div><span class="tag pass">通过</span></div>
+          <div class="audit-row"><div>角色设定审核</div><span class="tag pass">通过</span></div>
+          <div class="audit-row"><div>场景道具审核</div><span class="tag pass">通过</span></div>
+          <div class="audit-row"><div>分镜逻辑审核</div><span class="tag pass">通过</span></div>
+          <div class="audit-row"><div>提示词合规审核</div><span class="tag pass">通过</span></div>
+          <div class="audit-row"><div>图片质量审核</div><span class="tag return">打回</span></div>
+          <div class="audit-row"><div>视频质量审核</div><span class="tag review">需复核</span></div>
+          <div class="audit-row"><div>音画同步审核</div><span class="tag pass">通过</span></div>
+          <div class="audit-row"><div>总监制终验</div><span class="tag review">待终审</span></div>
+        </div>
+      </div>
+    </aside>
+  </main>
 </div>
 
-<!-- 用户确认弹窗 (剧本阶段) -->
-<div class="modal-mask" id="modal-mask" style="display:none;">
-  <div class="modal" id="modal-content"></div>
-</div>
-
-<!-- 原型控制 -->
-<div class="demo-controls">
-  <div class="demo-title">原型演示 · 切换场景</div>
-  <div class="demo-btns" id="demoBtns">
-    <button data-scene="novel" onclick="switchScene('novel')">小说</button>
-    <button data-scene="script" onclick="switchScene('script')">剧本</button>
-    <button data-scene="art" onclick="switchScene('art')">美术</button>
-    <button data-scene="storyboard" onclick="switchScene('storyboard')">分镜</button>
-    <button data-scene="image" class="active" onclick="switchScene('image')">生图</button>
-    <button data-scene="video" onclick="switchScene('video')">视频</button>
-    <button data-scene="review" onclick="switchScene('review')">审核</button>
-    <button data-scene="comfyui" onclick="switchScene('comfyui')">ComfyUI</button>
-    <button data-scene="versions" onclick="switchScene('versions')">版本历史</button>
-  </div>
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
-// ============ 数据 ============
-const projectName = "退婚后，我继承万亿家产";
-
-const messages = [
-  { type: "director", time: "23:12:05", html: `
-    <div class="sender">导演 Agent · 23:12:05</div>
-    <div class="content">
-      您好, 我是 Toonflow 导演 Agent 🎬<br>
-      收到小说 <strong>《${projectName}》</strong>, 共 12 章, 约 8.6 万字。<br>
-      我已分析情节点: <code>87</code> 个核心事件, 提炼出 <code>3</code> 幕结构。<br><br>
-      <strong>我的制作计划:</strong>
-      <ul>
-        <li>📝 编剧 → 生成 <code>8</code> 场标准剧本 (已完成)</li>
-        <li>🎬 副导演 → 拆解 <code>24</code> 个分镜 (已完成)</li>
-        <li>👗 服装 / 💄 化妆 / 🏛 置景 → 三个工种并行 (已完成)</li>
-        <li>📷 DP → 按 24 个 shot 并行生图 (4 张并发) <strong>← 当前</strong></li>
-        <li>🎥 视效 → 生视频 (待 DP 完成后启动)</li>
-        <li>✂ 剪辑 + 🎵 录音 → 后期 (待视频完成后启动)</li>
-      </ul>
-      <div class="actions">
-        <button class="btn-mini primary" onclick="switchScene('script')">查看剧本</button>
-        <button class="btn-mini" onclick="switchScene('storyboard')">查看分镜</button>
-        <button class="btn-mini" onclick="alert('已记录风格调整: 切换为更冷峻的色调')">调整整体风格</button>
-      </div>
-    </div>
-  `},
-  { type: "director", time: "23:18:42", html: `
-    <div class="sender">导演 Agent · 23:18:42</div>
-    <div class="content">
-      ✅ 场 1-8 剧本已完成, 写入 <span class="link" onclick="switchScene('script')">剧本管理</span>。<br>
-      ✅ 24 个分镜已完成, 写入 <span class="link" onclick="switchScene('storyboard')">分镜表</span>。<br>
-      ✅ 12 个角色 / 8 个场景 / 5 个道具 已入 <span class="link" onclick="switchScene('art')">资产中心</span>。<br><br>
-      🔄 现在派出 <strong>DP 摄影指导</strong>, 按 4 张并发生成 24 个分镜的画面。<br>
-      预计耗时 8-12 分钟 (受 API 限流影响)。
-    </div>
-  `},
-  { type: "director", time: "23:22:15", html: `
-    <div class="sender">导演 Agent · 23:22:15</div>
-    <div class="content">
-      ⚠️ <strong>shot_3 的构图审核未通过</strong> (composition: <code>0.58</code> &lt; 阈值 <code>0.7</code>)<br>
-      监制 Agent 分析: "画面主体偏离中心, 缺少前景纵深, 与分镜描述不符"<br><br>
-      建议重做, 请您选择:
-      <div class="actions">
-        <button class="btn-mini primary" onclick="alert('已让 DP 改 prompt 重新生成 shot_3')">A) 重写构图 prompt</button>
-        <button class="btn-mini" onclick="alert('已切换为 close-up 镜头重新生成')">B) 换为 close-up 镜头</button>
-        <button class="btn-mini" onclick="switchScene('comfyui')">C) 换 ComfyUI workflow</button>
-        <button class="btn-mini" onclick="alert('已切换 SDXL 模型重新生成')">D) 换模型</button>
-        <button class="btn-mini" onclick="alert('已派给编剧重写场 3 剧本')">E) 跨工种: 让编剧改剧本</button>
-      </div>
-    </div>
-  `},
-  { type: "user", time: "23:23:01", html: `
-    <div class="sender">我 · 23:23:01</div>
-    <div class="content">A, 重写 prompt。让陈凡更靠画面右侧, 加上前景的书桌做纵深。</div>
-  `},
-  { type: "director", time: "23:23:18", html: `
-    <div class="sender">导演 Agent · 23:23:18</div>
-    <div class="content">
-      收到, 已将您的建议附加到 shot_3 的 retry instruction:<br>
-      <code>"陈凡位于画面右侧 1/3, 前景书桌虚化做纵深, 主光源左前方 45°"</code><br>
-      DP 正在重新生成, 预计 30s ...<br><br>
-      <span class="link" onclick="switchScene('versions')">查看 shot_3 的版本历史</span>
-    </div>
-  `},
-  { type: "director", time: "23:25:42", html: `
-    <div class="sender">导演 Agent · 23:25:42</div>
-    <div class="content">
-      ✅ shot_3 第二次生成已完成, 监制审核通过 (composition: <code>0.85</code>)<br>
-      v2 已设为当前版本, v1 已存档到 <span class="link" onclick="switchScene('versions')">版本历史</span>
-    </div>
-  `},
+const stations = [
+  { group: '调度类 Agent', name: '总导演调度 Agent', status: 'run', desc: '任务拆解 / 跨 Agent 协同 / 风格统一', input: '人工制片需求\\n- 原著: 退婚后，我继承万亿家产\\n- 风格: 都市复仇 / 高级冷感 / 快节奏\\n- 成片标准: 90s 竖屏短剧样片', process: '模型: DirectorPlanner-v1.6\\n策略: 分阶段门禁 + 自动打回\\n输出事件: taskgraph.created, task.started', output: '全流程任务排期\\n节点执行指令 24 条\\n跨 Agent 协同信号 8 条', review: '总监制复核: 通过\\n人工终审: 无需\\n下一步: 派发剧本与美术并行线' },
+  { group: '执行类 / 剧本线', name: '剧本改编 Agent', status: 'pass', desc: '小说转剧本 / 场次拆分 / 情绪标注', input: '原著片段 + 总导演调度指令', process: '模型: ScriptForge-Drama v3\\n步骤: 提炼冲突 -> 场次拆分 -> 情绪曲线', output: 'o_script/S03.v02\\n8 场剧本，主情绪: 克制反击', review: '剧本内容审核 Agent: 通过\\n评分: 0.91' },
+  { group: '执行类 / 剧本线', name: '台词打磨 Agent', status: 'pass', desc: '人物语言 / 语速 / 台词时序', input: '审核通过的初版剧本', process: '模型: DialoguePolish v2\\n约束: 女主冷静，男配压迫感', output: '终版台词 S03.dialogue.v02\\n含语气、语速、停顿标注', review: '剧本内容审核 Agent: 通过\\n无打回' },
+  { group: '执行类 / 美术线', name: '角色设定 Agent', status: 'pass', desc: '角色卡 / 外貌 / 一致性规则', input: '终版剧本 + 角色风格要求', process: '模型: CharacterBible v2.4\\n生成 CHR-01~CHR-06', output: '角色设定卡 6 份\\n一致性约束 42 条', review: '角色设定审核 Agent: 通过\\n评分: 0.94' },
+  { group: '执行类 / 美术线', name: '服化道设计 Agent', status: 'run', desc: '服装 / 妆容 / 道具清单', input: '角色设定卡 + 剧本场景要求', process: '模型: CostumeProp v1.9\\n正在生成宴会礼服与随身道具', output: '服化道设计稿 v02\\n道具: 黑卡、合同、红酒杯', review: '场景道具审核 Agent: 等待' },
+  { group: '执行类 / 美术线', name: '场景概念 Agent', status: 'pass', desc: '空间布局 / 光影 / 天气时段', input: '剧本场次 S03 + 美术风格', process: '模型: SceneConcept v2.2\\n设定: 暮色宴会厅 / 逆光 / 冷色金属', output: 'SCN-04-v01\\n空间纵深、光影参数、环境元素', review: '场景道具审核 Agent: 通过' },
+  { group: '执行类 / 美术线', name: '衍生图合成 Agent', status: 'run', desc: '角色着装图 / 场景效果图 / 道具特写', input: '角色设定 + 服化道 + 场景设定', process: '模型: ImageForge-Cine v2.8\\n提示词: role full-body, obsidian dress, banquet hall', output: '角色全身图 6 张\\n场景效果图 4 张\\n道具特写 8 张', review: '图片质量审核 Agent: 进行中' },
+  { group: '执行类 / 分镜线', name: '分镜脚本 Agent', status: 'pass', desc: '景别 / 运镜 / 机位 / 时长', input: '终版台词 + 全量美术资产', process: '模型: StoryboardPlanner v2\\nS03 拆为 4 个镜头', output: 'SB-S03-script-v02\\n24 镜头脚本', review: '分镜逻辑审核 Agent: 通过' },
+  { group: '执行类 / 分镜线', name: '分镜提示词优化 Agent', status: 'pass', desc: '正向词 / 负向词 / 一致性约束', input: '分镜脚本 + 美术元数据 + CHR 约束', process: '模型: PromptCine v4\\nshot_12 正向 186 token，负向 42 token', output: 'PRM-SB-012-v02\\n模型参数建议: 1024x576, CFG 6.5', review: '提示词合规审核 Agent: 通过' },
+  { group: '执行类 / 分镜线', name: '分镜生图执行 Agent', status: 'return', desc: '逐镜生图 / 参数日志 / 版本归档', input: '审核通过的提示词包 PRM-SB-012-v02\\n指定模型: ImageForge-Cine v2.8\\n参考素材: CHR-02-v04, SCN-04-v01', process: '模型: ImageForge-Cine v2.8\\n采样: 32 steps, CFG 6.5, seed 481922\\n正向: cinematic medium shot, heroine in obsidian dress, cold rim light, banquet hall depth...\\n负向: distorted hands, wrong gaze, melted face, low detail\\n日志: v01 构图偏平 -> v02 角色比例偏差 -> v03 当前候选', output: 'ART-SB-012-v03\\n缩略图 4 张，主选图 1 张\\n写回: o_storyboard_image\\n元数据: agent=shot-image-executor, version=v03, retry=2', review: '审核 Agent: 图片质量审核 Agent\\n状态: 未通过，等待人工终审\\n原因: 角色视线方向与台词情绪不一致，前景纵深不足\\n打回对象: 分镜生图执行 Agent\\nretryInstruction: 保留 CHR-02，强化 foreground depth 与 gaze target' },
+  { group: '执行类 / 视频线', name: '视频生成 Agent', status: 'review', desc: '单镜视频 / 动效提示词 / 参考图', input: '已审分镜图 ART-SB-012-v04\\n镜头脚本 shot_12 / 04s\\n角色锁定 CHR-02-v04 + CHR-05-v01\\n场景锁定 SCN-04-v01', process: '模型: MotionForge-Cine v1.4\\n时长: 4s / 24fps / camera lock 0.72 / motion strength 0.46\\n动效提示词: heroine pushes contract back, controlled wrist motion, cold rim light, foreground document slide\\n日志: v01 人物眼神漂移 -> v02 合同运动自然但袖口纹理轻微闪烁', output: 'VID-SB-012-v02\\n写回: o_video_clip\\n首帧: ART-SB-012-v04\\n元数据: agent=video-generator, version=v02, retry=1', review: '审核 Agent: 视频质量审核 Agent\\n状态: 需复核\\n原因: 袖口纹理在第 62-78 帧轻微闪烁，角色脸部一致性通过\\n打回对象: 视频生成 Agent\\nretryInstruction: 锁定衣袖区域纹理，降低 motion strength 至 0.38，保留镜头推近节奏' },
+  { group: '执行类 / 视频线', name: '一致性校验 Agent', status: 'review', desc: '跨镜头人物 / 场景 / 色调校验', input: '全量单镜视频片段', process: '模型: ContinuityQA v1.2\\n比对: CHR-02 面部特征、黑色礼服、宴会厅冷金色调、合同道具位置', output: 'RPT-CONT-S03-v01\\n通过 5/6 个镜头，shot_12 标记为视频质量复核', review: '总监制复核: 等待视频质量审核结论' },
+  { group: '执行类 / 音剪线', name: '配音生成 Agent', status: 'pass', desc: '角色音色 / 情绪 / 语速', input: 'DLG-S03-v02 + CHR-02-v04 + 情绪标注', process: '模型: VoiceCast-Pro v2.1\\n女主 cold alto / speed 0.92 / pause 0.8s\\n男配 polished baritone / pressure 0.76', output: 'VOX-S03-v02\\n逐镜配音音频 12 条\\n写回: o_audio_voice', review: '音画同步审核 Agent: 通过' },
+  { group: '执行类 / 音剪线', name: '配乐适配 Agent', status: 'pass', desc: '配乐 / 环境音效 / 情绪曲线', input: '全片节奏曲线 + 分镜脚本 + 视频片段粗剪', process: '模型: ScoreMatch-Cine v1.7\\ncue_01 宴会低频 -> cue_02 反击上升 -> cue_03 黑卡落点', output: 'BGM-S03-v01\\n配乐音轨 + 环境音效素材', review: '音画同步审核 Agent: 通过' },
+  { group: '执行类 / 音剪线', name: '剪辑合成 Agent', status: 'review', desc: '片段串联 / 音画同步 / 成片输出', input: 'VID-SB-009~014 + VOX-S03-v02 + BGM-S03-v01 + 特效标注', process: '模型: EditAssembler v1.3\\n按分镜顺序拼接，添加黑卡揭示字幕与转场', output: 'CUT-S03-v03\\nFILM-S03-final-v03\\n写回: o_final_video', review: '总监制 Agent: 待人工终审' },
+  { group: '审核类 Agent', name: '图片质量审核 Agent', status: 'return', desc: '画面质量 / 无崩坏 / 角色一致性', input: 'ART-SB-012-v03', process: '模型: VisualQA-Supervisor v1.8\\n检测: gaze mismatch, foreground depth, prompt adherence', output: '审核报告 RPT-IMG-012-v03\\n问题区域: 右眼视线 / 前景层次', review: '打回分镜生图执行 Agent，循环次数 +1' },
+  { group: '审核类 Agent', name: '总监制 Agent', status: 'review', desc: '阶段终审 / 成片终验 / 跨环节一致性', input: '分镜阶段全部专项审核报告', process: '汇总评分: 0.72\\n建议: 打回 shot_12，不阻塞其他镜头', output: 'director.user_input_required', review: '等待人工终审' }
 ];
 
-// ============ 9 个场景渲染器 ============
-function sceneNovel() {
-  return `
-    <div class="stage-card">
-      <div class="stage-title">
-        <div class="icon">📕</div>
-        <div><div class="label">阶段 1: 小说原文导入</div><div class="sub">由制片人 Agent 完成 · 共 12 章</div></div>
-        <div class="pill green" style="margin-left:auto;">✓ 已完成</div>
-      </div>
-      <div style="background:#f9fafb;border-radius:8px;padding:16px;color:#374151;line-height:1.7;">
-        <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">章节列表</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
-          ${[1,2,3,4,5,6,7,8,9,10,11,12].map(n => `
-            <div style="background:#fff;padding:8px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;">
-              <span style="color:#2563eb;font-weight:600;">第 ${n} 章</span> · <span style="color:#6b7280;">${(4000+Math.random()*3000)|0} 字</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    </div>
-  `;
-}
+const shots = [
+  { id: 'shot_09', view: '远景', time: '03s', state: '通过' },
+  { id: 'shot_10', view: '中景', time: '04s', state: '通过' },
+  { id: 'shot_11', view: '特写', time: '02s', state: '通过' },
+  { id: 'shot_12', view: '中近景', time: '04s', state: '打回' },
+  { id: 'shot_13', view: '反打', time: '03s', state: '待审' },
+  { id: 'shot_14', view: '推镜', time: '05s', state: '待审' }
+];
 
-function sceneScript() {
-  return `
-    <div class="stage-card">
-      <div class="stage-title">
-        <div class="icon">📝</div>
-        <div><div class="label">阶段 2: 剧本生成</div><div class="sub">由编剧 Agent 完成 · 8 场戏已写入 o_script (source=harness)</div></div>
-        <div class="pill green" style="margin-left:auto;">✓ 已完成</div>
-      </div>
-      <div class="step-tabs">
-        <div class="tab active">全部 8 场</div>
-        <div class="tab">场 1-4</div>
-        <div class="tab">场 5-8</div>
-      </div>
-      ${[
-        ["场 1", "陈凡在豪华婚宴上被当场退婚，苏家当众撕毁婚约。他神色平静，转身离开。", "苏家大宅", "陈凡、苏婉、苏父"],
-        ["场 2", "陈凡回到破旧出租屋，律师敲门递来一份遗嘱——他竟是京城万亿陈家继承人。", "出租屋", "陈凡、王律师"],
-        ["场 3", "陈凡身份曝光，昔日同学王凯当众嘲讽，反被新任秘书冷眼回击。", "同学聚会", "陈凡、王凯、秘书"],
-        ["场 4", "苏家生意陷入危机，苏父登门道歉，求陈凡救苏家。", "陈家客厅", "陈凡、苏父"],
-      ].map(([n, content, loc, chars]) => `
-        <div class="script-row">
-          <div class="scene-no">${n}</div>
-          <div>
-            <div class="scene-content">${content}</div>
-            <div class="scene-meta">📍 ${loc} · 👥 ${chars}</div>
-          </div>
-          <div class="pill green">✓ 通过</div>
-          <div style="display:flex;gap:4px;justify-content:flex-end;">
-            <button style="width:24px;height:24px;border-radius:4px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;" title="编辑">✎</button>
-            <button style="width:24px;height:24px;border-radius:4px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;" title="重新生成">⟲</button>
-          </div>
-        </div>
-      `).join('')}
-      <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1e3a8a;">
-        💡 这些剧本可在 <code>#/script</code> 业务页面直接查看 (source=harness 过滤)
-      </div>
-    </div>
-  `;
-}
-
-function sceneArt() {
-  const characters = [
-    { name: "陈凡", desc: "男主 · 25 岁", emoji: "🧑", color: "linear-gradient(135deg,#dbeafe,#93c5fd)" },
-    { name: "苏婉", desc: "前未婚妻 · 23 岁", emoji: "👩", color: "linear-gradient(135deg,#fce7f3,#f9a8d4)" },
-    { name: "王律师", desc: "配角 · 45 岁", emoji: "👨‍⚖️", color: "linear-gradient(135deg,#e0e7ff,#a5b4fc)" },
-    { name: "王凯", desc: "反派同学 · 25 岁", emoji: "🧑", color: "linear-gradient(135deg,#fee2e2,#fca5a5)" },
-    { name: "苏父", desc: "苏家家主 · 55 岁", emoji: "👨", color: "linear-gradient(135deg,#fef3c7,#fde68a)" },
-    { name: "秘书", desc: "陈凡助理", emoji: "👩‍💼", color: "linear-gradient(135deg,#d1fae5,#86efac)" },
-  ];
-  return `
-    <div class="stage-card">
-      <div class="stage-title">
-        <div class="icon">👥</div>
-        <div><div class="label">阶段 3: 美术部 (角色 + 场景 + 道具)</div><div class="sub">服装 · 化妆 · 置景 三个工种并行 · 已写入 o_character_library / o_scene_library / o_prop_library</div></div>
-        <div class="pill green" style="margin-left:auto;">✓ 已完成</div>
-      </div>
-      <div class="step-tabs">
-        <div class="tab active">角色 (6)</div>
-        <div class="tab">场景 (4)</div>
-        <div class="tab">道具 (5)</div>
-      </div>
-      <div class="art-grid">
-        ${characters.map(c => `
-          <div class="art-card">
-            <div class="thumb" style="background:${c.color};">${c.emoji}</div>
-            <div class="info">
-              <div class="name">${c.name}</div>
-              <div class="meta">${c.desc}</div>
-              <div class="status">
-                <span class="pill green">已生成</span>
-                <span class="pill purple">3 套服装</span>
-              </div>
-            </div>
-          </div>
-        `).join('')}
-        <div class="art-card" style="border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;">
-          <div style="text-align:center;color:#9ca3af;">
-            <div style="font-size:30px;">+</div>
-            <div style="font-size:12px;margin-top:6px;">新增角色</div>
-          </div>
-        </div>
-      </div>
-      <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1e3a8a;">
-        💡 角色库可在 <code>#/assets</code> 业务页面查看, DP 生图时会从 MemoryBus 读取角色设定保证一致性
-      </div>
-    </div>
-  `;
-}
-
-function sceneStoryboard() {
-  const shots = Array.from({length: 24}, (_, i) => ({ id: i + 1, state: "done" }));
-  return `
-    <div class="stage-card">
-      <div class="stage-title">
-        <div class="icon">🎞</div>
-        <div><div class="label">阶段 4: 分镜表</div><div class="sub">由副导演 Agent 完成 · 24 个分镜已写入 o_storyboard</div></div>
-        <div class="pill green" style="margin-left:auto;">✓ 24/24 已完成</div>
-      </div>
-      <div class="shot-grid">
-        ${shots.map(s => `
-          <div class="shot-card ${s.state}">
-            <div class="bg">🖼</div>
-            <div class="overlay"><span>shot_${s.id}</span><span>✓</span></div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-}
-
-function sceneImage() {
-  const states = [
-    "approved","approved","rejected","approved","approved","approved","approved","approved",
-    "approved","approved","approved","reviewing","running","running","running","running",
-    "pending","pending","pending","pending","pending","pending","pending","pending"
-  ];
-  return `
-    <div class="stage-card">
-      <div class="stage-title">
-        <div class="icon">📷</div>
-        <div><div class="label">阶段 5: DP 摄影指导 · 生图 (4 张并发)</div><div class="sub">已生成 12/24 · 1 张被打回 · 4 张生成中 · 7 张排队 · 已写入 o_assets</div></div>
-        <div class="pill amber live" style="margin-left:auto;">⚡ DP 工作中</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
-        ${states.map((s, i) => {
-          const gradients = ["linear-gradient(135deg,#fef3c7,#fde68a)","linear-gradient(135deg,#dbeafe,#93c5fd)","linear-gradient(135deg,#fce7f3,#f9a8d4)","linear-gradient(135deg,#d1fae5,#86efac)","linear-gradient(135deg,#e0e7ff,#a5b4fc)","linear-gradient(135deg,#fed7aa,#fdba74)"];
-          const g = gradients[i % gradients.length];
-          const emojis = ["🎬","🖼","🎞","📷","🌆","🌃","🌅","🌄","🏛","🏠","🏢","👰","🤵","💼","📜","💍","💎","🚗","📱","💰","📊","🎁","🍷","🌹"];
-          const score = s === 'approved' ? { c: 0.85, st: 0.88, ch: 0.92 } :
-                        s === 'rejected' ? { c: 0.58, st: 0.72, ch: 0.80 } :
-                        s === 'reviewing' ? { c: 0.75, st: 0.78, ch: 0.85 } : null;
-          return `
-            <div style="aspect-ratio:16/9;background:${g};border-radius:8px;position:relative;overflow:hidden;cursor:pointer;border:2px solid ${s==='approved'?'#10b981':s==='rejected'?'#ef4444':s==='reviewing'?'#f59e0b':'transparent'};${s==='pending'?'opacity:0.6;':''}">
-              <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:38px;color:#d97706;">${emojis[i]}</div>
-              <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.75));color:#fff;padding:8px 10px;font-size:11px;">
-                <div style="font-weight:500;">shot_${i+1} · ${s === 'rejected' ? '⚠️ 构图 0.58' : s === 'approved' ? '✓ 通过' : s === 'reviewing' ? '⏳ 审核中' : s === 'running' ? '⚡ 生成中' : '○ 排队'}</div>
-                ${score ? `<div style="display:flex;gap:4px;margin-top:3px;font-size:10px;">
-                  <span style="color:${score.c>=0.7?'#86efac':'#fca5a5'};">构图 ${score.c}</span>
-                  <span style="color:${score.st>=0.7?'#86efac':'#fca5a5'};">风格 ${score.st}</span>
-                  <span style="color:${score.ch>=0.7?'#86efac':'#fca5a5'};">角色 ${score.ch}</span>
-                </div>` : ''}
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-      <div class="reject-card" style="margin-top:14px;">
-        <div class="title">🚨 监制 Agent 报告: shot_3 构图审核未通过 (composition: 0.58 &lt; 0.7)</div>
-        <ul>
-          <li>画面主体偏离中心, 缺少前景纵深</li>
-          <li>与分镜描述"陈凡正面特写"不符</li>
-          <li>建议: 重写构图 prompt, 加上前景书桌做纵深</li>
-        </ul>
-        <div class="buttons">
-          <button class="primary" onclick="alert('已让 DP 重写 prompt 重新生成 shot_3')">A. 重写构图 prompt</button>
-          <button onclick="alert('已切换为 close-up 镜头')">B. 换为 close-up 镜头</button>
-          <button onclick="switchScene('comfyui')">C. 换 ComfyUI workflow</button>
-          <button onclick="alert('已切换为 Seedream 模型')">D. 换模型</button>
-          <button onclick="alert('已派给编剧重写场 3 剧本')">E. 跨工种: 让编剧改剧本</button>
-        </div>
-      </div>
-      <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1e3a8a;">
-        💡 生成的图片可在 <code>#/cornerScape</code> 业务页面查看 (source=harness)
-      </div>
-    </div>
-  `;
-}
-
-function sceneVideo() {
-  return `
-    <div class="stage-card">
-      <div class="stage-title">
-        <div class="icon">🎥</div>
-        <div><div class="label">阶段 6: 视效 · 生视频 (2 个并发)</div><div class="sub">等待 DP 生图全部完成后启动 · 24 个镜头待生成 · 调用 Wan2.1 / ComfyUI</div></div>
-        <div class="pill gray" style="margin-left:auto;">⏸ 等待中</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
-        ${Array.from({length: 24}, (_, i) => `
-          <div style="aspect-ratio:16/9;background:linear-gradient(135deg,#f3f4f6,#e5e7eb);border-radius:8px;position:relative;overflow:hidden;opacity:0.6;">
-            <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:38px;color:#9ca3af;">▶</div>
-            <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.5));color:#fff;padding:8px 10px;font-size:11px;">
-              <div>clip_${i+1} · 排队</div>
-              <div style="font-size:10px;margin-top:3px;">5s · 1080p · Wan2.1</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-      <div style="margin-top:12px;padding:10px;background:#fef3c7;border-radius:6px;font-size:12px;color:#92400e;">
-        ⏳ 等待依赖: DP 生图需全部通过审核 (当前 12/24)
-      </div>
-    </div>
-  `;
-}
-
-function sceneReview() {
-  return `
-    <div class="stage-card">
-      <div class="stage-title">
-        <div class="icon">📋</div>
-        <div><div class="label">阶段 7: 审核报告</div><div class="sub">由监制 Agent 综合审核 · 整体评分 0.84 (良好)</div></div>
-        <div class="pill amber" style="margin-left:auto;">⏳ 部分待审</div>
-      </div>
-      <div class="overview">
-        <h3>综合审核评分 (12/24 已审核)</h3>
-        <div class="stats">
-          <div class="stat"><div class="v">0.84</div><div class="l">综合分</div></div>
-          <div class="stat"><div class="v" style="color:#059669;">11</div><div class="l">通过</div></div>
-          <div class="stat"><div class="v" style="color:#dc2626;">1</div><div class="l">打回</div></div>
-          <div class="stat"><div class="v" style="color:#6b7280;">12</div><div class="l">待审</div></div>
-        </div>
-        <h4 style="font-size:13px;color:#374151;margin:12px 0 8px;">📐 技术维度 (weight 0.3)</h4>
-        <div class="review-row"><div class="name">分辨率</div><div class="bar"><div class="fill" style="width:92%"></div></div><div class="score" style="color:#059669;">0.92</div></div>
-        <div class="review-row"><div class="name">AI 瑕疵</div><div class="bar"><div class="fill" style="width:88%"></div></div><div class="score" style="color:#059669;">0.88</div></div>
-        <h4 style="font-size:13px;color:#374151;margin:12px 0 8px;">🎨 艺术维度 (weight 0.4)</h4>
-        <div class="review-row"><div class="name">构图</div><div class="bar"><div class="fill warn" style="width:74%"></div></div><div class="score" style="color:#d97706;">0.74</div></div>
-        <div class="review-row"><div class="name">风格匹配</div><div class="bar"><div class="fill" style="width:85%"></div></div><div class="score" style="color:#059669;">0.85</div></div>
-        <h4 style="font-size:13px;color:#374151;margin:12px 0 8px;">📜 内容匹配 (weight 0.3)</h4>
-        <div class="review-row"><div class="name">场景描述</div><div class="bar"><div class="fill" style="width:88%"></div></div><div class="score" style="color:#059669;">0.88</div></div>
-        <div class="review-row"><div class="name">角色一致性</div><div class="bar"><div class="fill" style="width:90%"></div></div><div class="score" style="color:#059669;">0.90</div></div>
-      </div>
-      <div class="overview">
-        <h3>📜 驳回历史 (1 条)</h3>
-        <div class="task-list">
-          <div class="task-row">
-            <div class="ico">🚨</div>
-            <div class="label"><b>shot_3</b> 构图未达 0.7 阈值 (实际 0.58) · 由监制 Agent 决策 · 23:22:15</div>
-            <div class="status"><span class="pill amber">已重做</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function sceneComfyui() {
-  return `
-    <div class="stage-card">
-      <div class="stage-title">
-        <div class="icon">🎨</div>
-        <div><div class="label">ComfyUI 工作流配置 · SDXL 人像特写</div><div class="sub">类型: image · 版本: v3 · 注入方式: widgets_values + inputs 混合</div></div>
-        <div style="margin-left:auto;display:flex;gap:6px;">
-          <button class="btn" style="padding:6px 12px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;cursor:pointer;font-size:13px;" onclick="alert('回滚到 v2')">↩ 回滚到 v2</button>
-          <button class="btn" style="padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;" onclick="alert('测试运行中...')">▶ 测试运行</button>
-        </div>
-      </div>
-      
-      <div class="comfyui-node">
-        <h4>节点 4: CLIPTextEncode <span class="node-id">id=4</span></h4>
-        <div class="param-row">
-          <div class="label">Prompt <span class="required">*</span></div>
-          <div class="input"><input type="text" value="{{prompt}} - 美丽女性, 微笑, 黑色长发" /></div>
-          <div class="inject">widgets_values[0]</div>
-        </div>
-        <div class="param-row">
-          <div class="label">Negative</div>
-          <div class="input"><input type="text" value="ugly, deformed, low quality" /></div>
-          <div class="inject">widgets_values[1]</div>
-        </div>
-      </div>
-      
-      <div class="comfyui-node">
-        <h4>节点 6: KSampler <span class="node-id">id=6</span></h4>
-        <div class="param-row">
-          <div class="label">Seed</div>
-          <div class="input"><div style="display:flex;gap:4px;"><input type="number" value="1234567890" style="flex:1;" /><button style="padding:5px 8px;border:1px solid #e5e7eb;background:#fff;border-radius:4px;cursor:pointer;">🎲</button></div></div>
-          <div class="inject">inputs.seed</div>
-        </div>
-        <div class="param-row">
-          <div class="label">Steps</div>
-          <div class="input"><input type="range" min="1" max="100" value="20" oninput="this.nextElementSibling.textContent=this.value" /><div style="font-size:11px;color:#6b7280;">20</div></div>
-          <div class="inject">inputs.steps</div>
-        </div>
-        <div class="param-row">
-          <div class="label">CFG Scale</div>
-          <div class="input"><input type="range" min="1" max="20" value="7" oninput="this.nextElementSibling.textContent=this.value" /><div style="font-size:11px;color:#6b7280;">7</div></div>
-          <div class="inject">inputs.cfg</div>
-        </div>
-        <div class="param-row">
-          <div class="label">Scheduler</div>
-          <div class="input"><select><option>dpmpp_2m</option><option>euler</option><option>ddim</option><option>karras</option></select></div>
-          <div class="inject">inputs.scheduler</div>
-        </div>
-      </div>
-      
-      <div class="comfyui-node">
-        <h4>节点 10: LoadImage <span class="node-id">id=10</span></h4>
-        <div class="param-row">
-          <div class="label">参考图 (IP-Adapter)</div>
-          <div class="input"><button style="padding:5px 10px;border:1px dashed #d1d5db;background:#f9fafb;border-radius:4px;cursor:pointer;font-size:12px;">📁 上传图片</button></div>
-          <div class="inject">inputs.image</div>
-        </div>
-      </div>
-      
-      <div style="margin-top:14px;padding:12px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1e3a8a;line-height:1.7;">
-        <strong>💡 注入方式说明:</strong><br>
-        • <code>widgets_values[N]</code>: 修改节点 widgets_values 数组的第 N 个元素 (旧 API 格式)<br>
-        • <code>inputs.&lt;key&gt;</code>: 修改节点 inputs 对象的指定字段 (新 API 格式)<br>
-        ParameterEditor 自动识别两种格式, 提交时按 injectVia 字段注入
-      </div>
-    </div>
-  `;
-}
-
-function sceneVersions() {
-  return `
-    <div class="stage-card">
-      <div class="stage-title">
-        <div class="icon">📊</div>
-        <div><div class="label">版本历史 · shot_3</div><div class="sub">所有历史版本保存到 o_artifact_version 表 · 支持对比与回滚</div></div>
-      </div>
-      <div class="version-list">
-        <div class="version-row current">
-          <div class="v">v2</div>
-          <div class="thumb">🖼</div>
-          <div class="info">
-            <div>当前版本 · 23:25:42 生成</div>
-            <div class="feedback">✓ 通过 · 综合 0.85 · 构图 0.85 · 风格 0.88 · 角色 0.92</div>
-          </div>
-          <div><span class="pill green">当前</span></div>
-          <div class="actions">
-            <button onclick="alert('查看大图')">查看</button>
-          </div>
-        </div>
-        <div class="version-row">
-          <div class="v">v1</div>
-          <div class="thumb" style="background:linear-gradient(135deg,#fee2e2,#fca5a5);">🖼</div>
-          <div class="info">
-            <div>历史版本 · 23:20:15 生成 (已打回)</div>
-            <div class="feedback">✗ 失败 · 综合 0.58 · 构图 0.58 (主体偏离中心) · 风格 0.72 · 角色 0.80</div>
-          </div>
-          <div><span class="pill red">已打回</span></div>
-          <div class="actions">
-            <button onclick="alert('查看大图')">查看</button>
-            <button onclick="alert('已回滚到 v1, 创建 v3 作为当前版本')" style="background:#2563eb;color:#fff;border-color:#2563eb;">↩ 回滚</button>
-          </div>
-        </div>
-      </div>
-      
-      <div style="margin-top:16px;padding:12px;background:#f9fafb;border-radius:8px;">
-        <h4 style="font-size:13px;color:#374151;margin-bottom:8px;">📋 版本对比</h4>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div>
-            <div style="font-size:11px;color:#6b7280;margin-bottom:4px;">v1 (已打回)</div>
-            <div style="aspect-ratio:16/9;background:linear-gradient(135deg,#fee2e2,#fca5a5);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:30px;">🖼</div>
-            <div style="font-size:11px;color:#dc2626;margin-top:4px;">构图 0.58 · 主体偏离</div>
-          </div>
-          <div>
-            <div style="font-size:11px;color:#6b7280;margin-bottom:4px;">v2 (当前)</div>
-            <div style="aspect-ratio:16/9;background:linear-gradient(135deg,#d1fae5,#86efac);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:30px;">🖼</div>
-            <div style="font-size:11px;color:#059669;margin-top:4px;">构图 0.85 · 主体居中</div>
-          </div>
-        </div>
-      </div>
-      
-      <div style="margin-top:12px;padding:10px;background:#eff6ff;border-radius:6px;font-size:12px;color:#1e3a8a;">
-        💡 所有产物 (剧本/图片/视频/音频) 都支持多版本保存, 历史版本永不丢失
-      </div>
-    </div>
-  `;
-}
-
-const sceneRenderers = {
-  novel: sceneNovel, script: sceneScript, art: sceneArt, storyboard: sceneStoryboard,
-  image: sceneImage, video: sceneVideo, review: sceneReview,
-  comfyui: sceneComfyui, versions: sceneVersions
+const shotDetails = {
+  shot_09: {
+    id: 'shot_09', view: '远景', time: '03s', state: '通过',
+    script: '宴会厅全景建立，女主从逆光入口进入，宾客视线形成压力场。',
+    camera: '24mm 广角 / 低机位', motion: '缓慢推入', lighting: '冷色主光 + 金色吊灯反射', action: '女主停步，抬眼看向长桌尽头',
+    model: 'ImageForge-Cine v2.8', params: '1024x576 / steps 30 / CFG 6.2 / seed 481909',
+    positive: 'wide cinematic banquet hall, heroine entering from backlight, luxury cold metal texture, guests watching, dramatic depth',
+    negative: 'low detail, distorted face, wrong anatomy, overexposed, flat lighting',
+    refs: ['CHR-02-v04', 'SCN-04-v01', 'PROP-red-wine-v02'],
+    reviewer: '图片质量审核 Agent', review: '构图、角色比例、场景纵深均通过；与场景概念一致。', retry: '无需重跑，锁定为分镜主版本。',
+    versions: [{ id: 'v01', status: 'pass', note: '主选' }, { id: 'v00', status: 'wait', note: '草图' }]
+  },
+  shot_10: {
+    id: 'shot_10', view: '中景', time: '04s', state: '通过',
+    script: '男配靠近女主，递出合同，台词节奏压迫但保持礼貌伪装。',
+    camera: '50mm 中景 / 双人构图', motion: '轻微横移', lighting: '侧逆光勾勒轮廓', action: '合同进入画面中心，女主不接',
+    model: 'ImageForge-Cine v2.8', params: '1024x576 / steps 32 / CFG 6.4 / seed 481910',
+    positive: 'medium two shot, contract in foreground, elegant hostile negotiation, cold rim light, cinematic shallow depth',
+    negative: 'extra fingers, unreadable document, broken hand, soft focus, messy background',
+    refs: ['CHR-02-v04', 'CHR-05-v01', 'PROP-contract-v01'],
+    reviewer: '图片质量审核 Agent', review: '道具位置清晰，人物关系明确，手部无崩坏。', retry: '无需重跑。',
+    versions: [{ id: 'v02', status: 'pass', note: '主选' }, { id: 'v01', status: 'return', note: '手部异常' }]
+  },
+  shot_11: {
+    id: 'shot_11', view: '特写', time: '02s', state: '通过',
+    script: '女主眼神特写，台词停顿前的冷静反击情绪。',
+    camera: '85mm 特写 / 眼部焦点', motion: '静帧微呼吸', lighting: '冷色眼神光', action: '女主轻微抬眼，嘴角没有笑意',
+    model: 'ImageForge-Cine v2.8', params: '768x1024 / steps 34 / CFG 6.8 / seed 481911',
+    positive: 'close-up heroine eyes, restrained revenge emotion, cold catchlight, luxury banquet bokeh, cinematic portrait',
+    negative: 'melted face, asymmetric eyes, plastic skin, exaggerated smile, low realism',
+    refs: ['CHR-02-v04', 'STYLE-cold-luxury-v03'],
+    reviewer: '图片质量审核 Agent', review: '人物一致性高，情绪表达符合台词停顿。', retry: '无需重跑。',
+    versions: [{ id: 'v03', status: 'pass', note: '主选' }, { id: 'v02', status: 'return', note: '表情过强' }]
+  },
+  shot_12: {
+    id: 'shot_12', view: '中近景', time: '04s', state: '打回',
+    script: '女主把合同推回桌面，冷静说出反击台词；画面要保留宴会厅纵深与对峙压力。',
+    camera: '65mm 中近景 / 桌面前景压迫构图', motion: '轻推镜，合同滑回男配方向', lighting: '冷色边缘光 + 桌面反射', action: '女主手指推回合同，视线锁定男配',
+    model: 'ImageForge-Cine v2.8', params: '1024x576 / steps 32 / CFG 6.5 / seed 481922',
+    positive: 'cinematic medium close shot, heroine in obsidian dress pushes contract back on table, cold rim light, banquet hall depth, restrained revenge, strong foreground depth, gaze locked to male antagonist',
+    negative: 'distorted hands, wrong gaze direction, melted face, low detail, flat foreground, extra document, broken perspective',
+    refs: ['CHR-02-v04', 'CHR-05-v01', 'SCN-04-v01', 'PROP-contract-v01'],
+    reviewer: '图片质量审核 Agent', review: '未通过：角色视线方向与台词情绪不一致，前景纵深不足，合同位置没有形成压力中心。', retry: '打回分镜生图执行 Agent；保留 CHR-02 与 SCN-04，强化 foreground depth、gaze target、contract leading line，重新生成 v04。',
+    versions: [{ id: 'v03', status: 'return', note: '当前打回' }, { id: 'v02', status: 'return', note: '角色比例偏差' }, { id: 'v01', status: 'return', note: '构图偏平' }]
+  },
+  shot_13: {
+    id: 'shot_13', view: '反打', time: '03s', state: '待审',
+    script: '男配反应镜头，笑容短暂凝固，压迫感第一次失效。',
+    camera: '70mm 反打 / 肩背前景', motion: '轻微后撤', lighting: '脸部半阴影', action: '男配眼神停顿，手指压住合同边缘',
+    model: 'ImageForge-Cine v2.8', params: '1024x576 / steps 30 / CFG 6.3 / seed 481923',
+    positive: 'reverse shot male antagonist reaction, smile frozen, shoulder foreground, luxury banquet tension, half shadow face',
+    negative: 'cartoon face, wrong age, duplicated hands, bad teeth, noisy background',
+    refs: ['CHR-05-v01', 'SCN-04-v01', 'PROP-contract-v01'],
+    reviewer: '图片质量审核 Agent', review: '等待审核队列；需重点检查表情与人物年龄一致性。', retry: '如表情过度戏剧化，回到分镜提示词优化 Agent 收紧情绪词。',
+    versions: [{ id: 'v01', status: 'review', note: '待审' }]
+  },
+  shot_14: {
+    id: 'shot_14', view: '推镜', time: '05s', state: '待审',
+    script: '镜头推向桌面黑卡，完成反击信息揭示，作为下一段视频生成的转场锚点。',
+    camera: '35mm 桌面低角度', motion: '快速推镜到黑卡特写', lighting: '卡面冷反光，背景虚化', action: '黑卡落在合同上，压住签字页',
+    model: 'ImageForge-Cine v2.8', params: '1024x576 / steps 28 / CFG 6.1 / seed 481924',
+    positive: 'dramatic push-in to black premium card on contract, cold reflection, luxury table surface, cinematic transition anchor',
+    negative: 'unreadable card, bad typography, overexposed reflection, low detail',
+    refs: ['PROP-black-card-v02', 'PROP-contract-v01', 'SCN-04-v01'],
+    reviewer: '图片质量审核 Agent', review: '等待审核队列；需检查卡面标识是否合规。', retry: '若卡面文字不可控，改为无字黑卡并用剪辑字幕承载信息。',
+    versions: [{ id: 'v01', status: 'review', note: '待审' }]
+  }
 };
 
-// ============ 场景切换 ============
-function switchScene(scene) {
-  // 更新流程导览高亮
-  document.querySelectorAll('#flowNav .flow-step').forEach(el => {
-    el.classList.remove('active');
+const screens = ['station', 'script', 'art', 'storyboard', 'video', 'post', 'loop', 'review', 'settings', 'trace'];
+let selectedStation = stations.findIndex((item) => item.name === '分镜生图执行 Agent');
+let selectedShot = 'shot_12';
+
+function renderStations() {
+  const root = document.getElementById('stationList');
+  let currentGroup = '';
+  root.innerHTML = '';
+  stations.forEach((station, index) => {
+    if (station.group !== currentGroup) {
+      currentGroup = station.group;
+      root.insertAdjacentHTML('beforeend', `<div class="group-label">${currentGroup}</div>`);
+    }
+    const statusText = { run: '运行中', pass: '通过', review: '待终审', return: '打回', wait: '等待' }[station.status];
+    root.insertAdjacentHTML('beforeend', `
+      <button class="station ${index === selectedStation ? 'active' : ''} ${station.status === 'return' ? 'returned' : ''}" onclick="selectStation(${index})">
+        <span><span class="station-name">${station.name}</span><span class="station-desc">${station.desc}</span></span>
+        <span class="tag ${station.status}">${statusText}</span>
+      </button>`);
   });
-  // 更新 demo-controls 高亮
-  document.querySelectorAll('#demoBtns button').forEach(el => {
-    el.classList.toggle('active', el.dataset.scene === scene);
+}
+
+function renderStationDetail() {
+  const station = stations[selectedStation];
+  document.getElementById('stationTitle').textContent = station.name;
+  document.getElementById('stationSubtitle').textContent = station.desc;
+  document.getElementById('metricStatus').textContent = { run: '运行中', pass: '已通过', review: '待终审', return: '打回重跑', wait: '等待' }[station.status];
+  document.getElementById('inputBlock').textContent = station.input.replaceAll('\\n', '\n');
+  document.getElementById('processBlock').textContent = station.process.replaceAll('\\n', '\n');
+  document.getElementById('outputBlock').textContent = station.output.replaceAll('\\n', '\n');
+  document.getElementById('reviewBlock').textContent = station.review.replaceAll('\\n', '\n');
+}
+
+function renderShots() {
+  const root = document.getElementById('shotList');
+  root.innerHTML = shots.map((shot, index) => `
+    <button class="shot ${shot.id === selectedShot ? 'active' : ''}" onclick="selectShot('${shot.id}')">
+      <div class="thumb"></div>
+      <div class="shot-body">
+        <b>${shot.id}</b>
+        <div class="small muted">${shot.view} · ${shot.time}</div>
+        <span class="tag ${shot.state === '通过' ? 'pass' : shot.state === '打回' ? 'return' : 'review'}">${shot.state}</span>
+      </div>
+    </button>
+  `).join('');
+}
+
+function renderShotInspector() {
+  const shot = shotDetails[selectedShot] || shotDetails.shot_12;
+  const statusClass = shot.state === '通过' ? 'pass' : shot.state === '打回' ? 'return' : 'review';
+  document.getElementById('shotStatusTag').className = `tag ${statusClass}`;
+  document.getElementById('shotStatusTag').textContent = shot.state;
+  document.getElementById('shotInspectorTitle').textContent = `${shot.id} · ${shot.view} · ${shot.time}`;
+  document.getElementById('shotVersions').innerHTML = shot.versions.map((version) => `<span class="shot-version ${version.status}"><b>${version.id}</b><small>${version.note}</small></span>`).join('');
+  document.getElementById('shotScript').textContent = shot.script;
+  document.getElementById('shotLensGrid').innerHTML = `
+    <div><span class="small muted">机位</span><br>${escapeHtml(shot.camera)}</div>
+    <div><span class="small muted">运镜</span><br>${escapeHtml(shot.motion)}</div>
+    <div><span class="small muted">光影</span><br>${escapeHtml(shot.lighting)}</div>
+    <div><span class="small muted">动作</span><br>${escapeHtml(shot.action)}</div>`;
+  document.getElementById('shotPromptBlock').textContent = `模型: ${shot.model}\n参数: ${shot.params}\n正向提示词:\n${shot.positive}\n\n负向提示词:\n${shot.negative}`;
+  document.getElementById('shotReviewBlock').textContent = `参考资产: ${shot.refs.join(' / ')}\n审核 Agent: ${shot.reviewer}\n审核意见: ${shot.review}\n打回指令: ${shot.retry}`;
+}
+
+function selectStation(index) {
+  selectedStation = index;
+  renderStations();
+  renderStationDetail();
+  setScene('station');
+  toast(`已切换工位：${stations[index].name}`);
+}
+
+function selectShot(id) {
+  selectedShot = id;
+  selectedStation = stations.findIndex((item) => item.name === '分镜生图执行 Agent');
+  renderStations();
+  renderStationDetail();
+  renderShots();
+  renderShotInspector();
+  setScene('storyboard');
+  toast(`${id}：显示提示词、模型参数、审核打回与版本链`);
+}
+
+function setScene(name) {
+  screens.forEach((screen) => {
+    document.getElementById(`screen-${screen}`).classList.toggle('active', screen === name);
   });
-  // 渲染右侧
-  document.getElementById('stagePane').innerHTML = 
-    renderOverview(scene) + (sceneRenderers[scene] ? sceneRenderers[scene]() : '<div class="stage-card">未知场景</div>');
-  document.getElementById('stagePane').scrollTop = 0;
 }
 
-function renderOverview(currentScene) {
-  const sceneToStep = { novel: 1, script: 2, art: 3, storyboard: 4, image: 5, video: 6, review: 7 };
-  const currentStep = sceneToStep[currentScene] || 0;
-  const tasks = [
-    { ico: "📕", label: "制片人 · 导入小说", text: "✓ 完成" },
-    { ico: "📝", label: "编剧 · 生成 8 场剧本", text: "✓ 完成" },
-    { ico: "🎬", label: "副导演 · 拆解 24 个分镜", text: "✓ 完成" },
-    { ico: "👗", label: "服装 · 6 个角色", text: "✓ 完成" },
-    { ico: "💄", label: "化妆 · 6 个角色", text: "✓ 完成" },
-    { ico: "🏛", label: "置景 · 4 个场景", text: "✓ 完成" },
-    { ico: "📷", label: "DP · 24 个镜头 (4 并发)", text: currentStep >= 5 ? "⚡ 12/24" : "🔄 进行中" },
-    { ico: "🎥", label: "视效 · 24 个视频 (2 并发)", text: currentStep >= 6 ? "○ 等待" : "○ 等待" },
-    { ico: "✂", label: "剪辑师 · 时间轴", text: "○ 等待" },
-    { ico: "🎵", label: "录音 · 配音 + 拟音", text: "○ 等待" },
-    { ico: "📋", label: "监制 · 综合审核", text: "○ 等待" },
-    { ico: "🎞", label: "制片人 · 成片汇报", text: "○ 等待" },
-  ];
-  return `
-    <div class="overview">
-      <h3>📊 Harness 任务总览 (7/12 工种已完成)</h3>
-      <div class="stats">
-        <div class="stat"><div class="v" style="color:#059669;">7</div><div class="l">已完成</div></div>
-        <div class="stat"><div class="v" style="color:#d97706;">1</div><div class="l">进行中</div></div>
-        <div class="stat"><div class="v" style="color:#6b7280;">4</div><div class="l">等待中</div></div>
-        <div class="stat"><div class="v">12/24</div><div class="l">图片</div></div>
-        <div class="stat"><div class="v">¥ 0.42</div><div class="l">已花费</div></div>
-        <div class="stat"><div class="v">~8 min</div><div class="l">预计剩余</div></div>
-      </div>
-      <div class="task-list">
-        ${tasks.map(t => `
-          <div class="task-row">
-            <div class="ico">${t.ico}</div>
-            <div class="label">${t.label}</div>
-            <div class="status">${t.text}</div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-}
-
-// ============ 对话 ============
-function sendMessage() {
-  const input = document.getElementById('userInput');
-  const text = input.value.trim();
-  if (!text) return;
-  const body = document.getElementById('chatBody');
-  const now = new Date();
-  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-  body.insertAdjacentHTML('beforeend', `
-    <div class="bubble user">
-      <div class="sender">我 · ${time}</div>
-      <div class="content">${text}</div>
-    </div>
-  `);
-  input.value = '';
-  body.scrollTop = body.scrollHeight;
-  setTimeout(() => {
-    const t2 = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()+1).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-    body.insertAdjacentHTML('beforeend', `
-      <div class="bubble director">
-        <div class="sender">导演 Agent · ${t2}</div>
-        <div class="content">
-          收到您的指令, 已用 LLM 解析意图并转交相关工种:<br>
-          <code>${text}</code><br>
-          处理进度将通过 SSE 事件流实时推送, 请关注右侧步骤画面或对话气泡。
-        </div>
-      </div>
-    `);
-    body.scrollTop = body.scrollHeight;
-  }, 600);
-}
-
-// ============ 弹窗 ============
-function showModal(type) {
-  const mask = document.getElementById('modal-mask');
-  const content = document.getElementById('modal-content');
-  if (type === 'pause-modal') {
-    content.innerHTML = `
-      <div class="modal-header">
-        <div class="title">⏸ 暂停 Harness</div>
-        <button class="close" onclick="closeModal()">×</button>
-      </div>
-      <div class="modal-body">
-        <p>确定要暂停当前 Harness 实例吗?</p>
-        <p style="font-size:12px;color:#6b7280;margin-top:8px;">暂停后, 正在执行的任务会完成当前步骤, 但不会派发新任务。可随时恢复。</p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" onclick="closeModal()">取消</button>
-        <button class="btn btn-primary" onclick="closeModal();alert('Harness 已暂停')">确定暂停</button>
-      </div>
-    `;
+function decide(text) {
+  const eventList = document.getElementById('eventList');
+  if (eventList) {
+    eventList.insertAdjacentHTML('afterbegin', `<div class="event">director.user_input / ${escapeHtml(text)}</div>`);
+    eventList.insertAdjacentHTML('afterbegin', `<div class="event">taskgraph.updated / ${text.includes('打回') ? 'reroute' : 'advance'}</div>`);
   }
-  mask.style.display = 'flex';
+  toast(`已提交终审决策：${text}`);
 }
 
-function closeModal() {
-  document.getElementById('modal-mask').style.display = 'none';
+function toast(text) {
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.style.display = 'block';
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2400);
 }
 
-// ============ 初始化 ============
-function init() {
-  document.getElementById('chatBody').innerHTML = messages.map(m => `<div class="bubble ${m.type}">${m.html}</div>`).join('');
-  document.getElementById('chatBody').scrollTop = 999999;
-  switchScene('image');
-  document.getElementById('userInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
 }
 
-init();
+renderStations();
+renderStationDetail();
+renderShots();
+renderShotInspector();
+const requestedScene = new URLSearchParams(window.location.search).get('scene');
+if (screens.includes(requestedScene)) setScene(requestedScene);
 </script>
 </body>
 </html>

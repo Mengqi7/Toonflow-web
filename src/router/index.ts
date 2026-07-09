@@ -15,6 +15,10 @@ const router = createRouter({
       redirect: "/workbench",
     },
     {
+      path: "/harness/control/:instanceId",
+      component: () => import("@/views/HarnessControlRoom.vue"),
+    },
+    {
       path: "/workbench",
       component: () => import("@/pages/workbench/index.vue"),
       redirect: "/project",
@@ -77,6 +81,8 @@ const router = createRouter({
 });
 router.beforeEach((to, from, next) => {
   if (to.path === "/login") {
+    next();
+  } else if (to.path === "/harness/control/demo") {
     next();
   } else {
     if (localStorage.getItem("token")) {

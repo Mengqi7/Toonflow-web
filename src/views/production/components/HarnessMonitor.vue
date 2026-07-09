@@ -73,7 +73,7 @@ let refreshTimer: any = null;
 const nodeStateCounts = computed(() => {
   const counts = { completed: 0, running: 0, pending: 0, failed: 0 };
   if (!activeInstance.value?.nodeStates) return counts;
-  Object.values(activeInstance.value.nodeStates).forEach((s: string) => {
+  Object.values(activeInstance.value.nodeStates as Record<string, string>).forEach((s) => {
     if ((counts as any)[s] !== undefined) (counts as any)[s]++;
   });
   return counts;
@@ -226,8 +226,10 @@ function computeLayerPositions(nodes: any[], edges: any[]): Map<string, { x: num
   return positions;
 }
 
-function stateTagTheme(state: string) {
-  const themes: Record<string, string> = { completed: 'success', running: 'warning', failed: 'danger', pending: 'default', paused: 'default' };
+type TagTheme = 'default' | 'primary' | 'danger' | 'warning' | 'success';
+
+function stateTagTheme(state: string): TagTheme {
+  const themes: Record<string, TagTheme> = { completed: 'success', running: 'warning', failed: 'danger', pending: 'default', paused: 'default' };
   return themes[state] || 'default';
 }
 

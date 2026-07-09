@@ -6,7 +6,7 @@
           <t-button theme="primary" size="small" @click="loadInstances">🔄 刷新</t-button>
           <t-tag v-if="runningCount > 0" theme="warning" variant="light">运行中: {{ runningCount }}</t-tag>
         </div>
-        <t-table :data="instances" :columns="instanceColumns" row-key="id" size="small" loading={loading} hover>
+        <t-table :data="instances" :columns="instanceColumns" row-key="id" size="small" :loading="loading" hover>
           <template #status="{row}">
             <t-tag v-if="row.status==='running'" theme="success" variant="light">🟢 运行中</t-tag>
             <t-tag v-else-if="row.status==='pending'" theme="default" variant="light">⏳ 等待中</t-tag>
@@ -16,10 +16,10 @@
           </template>
           <template #ops="{row}">
             <t-space size="small">
-              <t-button v-if="['pending','paused'].includes(row.status)" size="mini" theme="success" variant="text" @click="resumeWorkflow(row)">▶️</t-button>
-              <t-button v-if="['running','paused'].includes(row.status)" size="mini" theme="warning" variant="text" @click="pauseWorkflow(row)">⏸</t-button>
-              <t-button v-if="['pending','running','paused'].includes(row.status)" size="mini" theme="danger" variant="text" @click="cancelWorkflow(row)">❌</t-button>
-              <t-button size="mini" theme="default" variant="text" @click="showDetail(row)">🔍</t-button>
+              <t-button v-if="['pending','paused'].includes(row.status)" size="small" theme="success" variant="text" @click="resumeWorkflow(row)">▶️</t-button>
+              <t-button v-if="['running','paused'].includes(row.status)" size="small" theme="warning" variant="text" @click="pauseWorkflow(row)">⏸</t-button>
+              <t-button v-if="['pending','running','paused'].includes(row.status)" size="small" theme="danger" variant="text" @click="cancelWorkflow(row)">❌</t-button>
+              <t-button size="small" theme="default" variant="text" @click="showDetail(row)">🔍</t-button>
             </t-space>
           </template>
         </t-table>
@@ -32,7 +32,7 @@
         </div>
         <t-table :data="templates" :columns="templateColumns" row-key="id" size="small" hover>
           <template #ops="{row}">
-            <t-button size="mini" theme="success" variant="text" @click="startFromTemplate(row)">▶️ 启动</t-button>
+            <t-button size="small" theme="success" variant="text" @click="startFromTemplate(row)">▶️ 启动</t-button>
           </template>
         </t-table>
       </t-tab-panel>
@@ -151,9 +151,9 @@ async function doStart() {
   showStartDialog.value = false; loadInstances();
 }
 
-async function pauseWorkflow(inst: any) { try { await axios.post(`/harness/workflow/${inst.id}/pause`); window.$message.success('已暂停'); loadInstances(); } catch(e) { window.$message.error(e?.response?.data?.message || '失败'); } }
-async function resumeWorkflow(inst: any) { try { await axios.post(`/harness/workflow/${inst.id}/resume`); window.$message.success('已恢复'); loadInstances(); } catch(e) { window.$message.error(e?.response?.data?.message || '失败'); } }
-async function cancelWorkflow(inst: any) { if(!confirm(`确定取消?`)) return; try { await axios.post(`/harness/workflow/${inst.id}/cancel`); window.$message.success('已取消'); loadInstances(); } catch(e) { window.$message.error(e?.response?.data?.message || '失败'); } }
+async function pauseWorkflow(inst: any) { try { await axios.post(`/harness/workflow/${inst.id}/pause`); window.$message.success('已暂停'); loadInstances(); } catch(e: any) { window.$message.error(e?.response?.data?.message || '失败'); } }
+async function resumeWorkflow(inst: any) { try { await axios.post(`/harness/workflow/${inst.id}/resume`); window.$message.success('已恢复'); loadInstances(); } catch(e: any) { window.$message.error(e?.response?.data?.message || '失败'); } }
+async function cancelWorkflow(inst: any) { if(!confirm(`确定取消?`)) return; try { await axios.post(`/harness/workflow/${inst.id}/cancel`); window.$message.success('已取消'); loadInstances(); } catch(e: any) { window.$message.error(e?.response?.data?.message || '失败'); } }
 
 onMounted(() => { loadInstances(); loadTemplates(); loadAgents(); });
 </script>

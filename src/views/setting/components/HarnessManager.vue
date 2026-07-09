@@ -55,7 +55,7 @@
             style="margin-top:16px"
           >
             <template #operation>
-              <t-button v-if="novelStartResult.success" size="mini" theme="primary" variant="text" @click="goToMonitor(novelStartResult.instanceId)">
+              <t-button v-if="novelStartResult.success" size="small" theme="primary" variant="text" @click="goToMonitor(novelStartResult.instanceId)">
                 查看进度 →
               </t-button>
             </template>
@@ -71,7 +71,7 @@
         </div>
 
         <!-- 实例列表 -->
-        <t-table :data="instances" :columns="instanceColumns" row-key="id" size="small" loading={loadingInstances} hover>
+        <t-table :data="instances" :columns="instanceColumns" row-key="id" size="small" :loading="loadingInstances" hover>
           <template #status="{row}">
             <t-tag v-if="row.status==='running'" theme="success" variant="light">🟢 运行中</t-tag>
             <t-tag v-else-if="row.status==='pending'" theme="default" variant="light">⏳ 等待中</t-tag>
@@ -86,10 +86,10 @@
           </template>
           <template #ops="{row}">
             <t-space size="small">
-              <t-button v-if="row.status==='pending'||row.status==='paused'" size="mini" theme="success" variant="text" @click="resumeWorkflow(row)">▶️</t-button>
-              <t-button v-if="row.status==='running'||row.status==='paused'" size="mini" theme="warning" variant="text" @click="pauseWorkflow(row)">⏸</t-button>
-              <t-button v-if="['pending','running','paused'].includes(row.status)" size="mini" theme="danger" variant="text" @click="cancelWorkflow(row)">❌</t-button>
-              <t-button size="mini" theme="default" variant="text" @click="showDetail(row)">🔍</t-button>
+              <t-button v-if="row.status==='pending'||row.status==='paused'" size="small" theme="success" variant="text" @click="resumeWorkflow(row)">▶️</t-button>
+              <t-button v-if="row.status==='running'||row.status==='paused'" size="small" theme="warning" variant="text" @click="pauseWorkflow(row)">⏸</t-button>
+              <t-button v-if="['pending','running','paused'].includes(row.status)" size="small" theme="danger" variant="text" @click="cancelWorkflow(row)">❌</t-button>
+              <t-button size="small" theme="default" variant="text" @click="showDetail(row)">🔍</t-button>
             </t-space>
           </template>
         </t-table>
@@ -106,7 +106,7 @@
           <template #version="{row}"><t-tag theme="default" variant="light">v{{ row.version }}</t-tag></template>
           <template #ops="{row}">
             <t-space size="small">
-              <t-button size="mini" theme="success" variant="text" @click="startFromTemplate(row)">▶️ 启动</t-button>
+              <t-button size="small" theme="success" variant="text" @click="startFromTemplate(row)">▶️ 启动</t-button>
             </t-space>
           </template>
         </t-table>
@@ -195,8 +195,8 @@ const onTabChange = (val: any) => { activeTab.value = val as string; };
 const novelStartForm = ref({
   projectId: Number(projectStore().project?.id) || 0,
   workflowTemplate: 'film-production',
-  chapterFrom: null as number | null,
-  chapterTo: null as number | null,
+  chapterFrom: undefined as number | undefined,
+  chapterTo: undefined as number | undefined,
   novelText: '',
 });
 const novelStartLoading = ref(false);
@@ -244,8 +244,8 @@ function resetNovelForm() {
   novelStartForm.value = {
     projectId: Number(projectStore().project?.id) || 0,
     workflowTemplate: 'film-production',
-    chapterFrom: null,
-    chapterTo: null,
+    chapterFrom: undefined,
+    chapterTo: undefined,
     novelText: '',
   };
   novelStartResult.value = null;
@@ -350,18 +350,18 @@ async function startFromTemplate(wf: any) {
 
 async function pauseWorkflow(inst: any) {
   try { await axios.post(`/harness/workflow/${inst.id}/pause`); window.$message.success('已暂停'); loadInstances(); }
-  catch (e) { window.$message.error(e?.response?.data?.message || '失败'); }
+  catch (e: any) { window.$message.error(e?.response?.data?.message || '失败'); }
 }
 
 async function resumeWorkflow(inst: any) {
   try { await axios.post(`/harness/workflow/${inst.id}/resume`); window.$message.success('已恢复'); loadInstances(); }
-  catch (e) { window.$message.error(e?.response?.data?.message || '失败'); }
+  catch (e: any) { window.$message.error(e?.response?.data?.message || '失败'); }
 }
 
 async function cancelWorkflow(inst: any) {
   if (!confirm(`确定取消实例 ${inst.id.substring(0,8)}...?`)) return;
   try { await axios.post(`/harness/workflow/${inst.id}/cancel`); window.$message.success('已取消'); loadInstances(); }
-  catch (e) { window.$message.error(e?.response?.data?.message || '失败'); }
+  catch (e: any) { window.$message.error(e?.response?.data?.message || '失败'); }
 }
 
 // ── 实例详情 + DAG ──

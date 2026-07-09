@@ -6,7 +6,7 @@
       </div>
       <div class="itemBox fc ac">
         <t-tooltip
-          :content="menu.labelKey ? $t(menu.labelKey) : ''"
+          :content="menu.label || (menu.labelKey ? $t(menu.labelKey) : '')"
           placement="right"
           destroyOnClose
           :showArrow="false"
@@ -45,7 +45,7 @@
         </div>
         <div class="rightBtnList f ac">
           <t-tooltip
-            :content="menu.labelKey ? $t(menu.labelKey) : ''"
+            :content="menu.label || (menu.labelKey ? $t(menu.labelKey) : '')"
             placement="bottom"
             destroyOnClose
             :showArrow="false"
@@ -82,20 +82,31 @@ const { project } = storeToRefs(projectStore());
 import settingStore from "@/stores/setting";
 import { NotifyPlugin } from "tdesign-vue-next";
 const { showSetting, isElectron, needUpdate } = storeToRefs(settingStore());
-const menuList = ref([
+type WorkbenchMenuItem = {
+  type: "btn" | "divider";
+  path?: string;
+  label?: string;
+  labelKey?: string;
+  icon?: string;
+  nodelOnly?: boolean;
+  needProject?: boolean;
+};
+
+const menuList = ref<WorkbenchMenuItem[]>([
   { type: "btn", path: "/project", labelKey: "workbench.menu.myProject", icon: "i-folder-close" },
   { type: "btn", path: "/task", labelKey: "workbench.menu.taskCenter", icon: "i-view-list" },
   // { type: "divider" },
 ]);
 
-const rightBtnList = ref([
+const rightBtnList = ref<WorkbenchMenuItem[]>([
   { type: "btn", path: "/novel", labelKey: "workbench.menu.novel", icon: "i-notebook", nodelOnly: true },
   { type: "btn", path: "/scriptAgent", labelKey: "workbench.menu.scriptAgent", icon: "i-color-filter", nodelOnly: true },
   { type: "btn", path: "/script", labelKey: "workbench.menu.scriptManage", icon: "i-document-folder" },
   { type: "btn", path: "/cornerScape", labelKey: "workbench.menu.cornerScape", icon: "i-peoples-two" },
   { type: "btn", path: "/production", labelKey: "workbench.menu.production", icon: "i-carousel-video" },
   { type: "divider" },
-  { type: "btn", path: "/harness", labelKey: "Harness 监控", icon: "i-activity-source" },
+  { type: "btn", path: "/harness", label: "Harness 监控", icon: "i-activity-source" },
+  { type: "btn", path: "/harness/control/demo", label: "Harness 主控台", icon: "i-movie-board" },
   { type: "btn", path: "/assets", labelKey: "workbench.menu.assetCenter", icon: "i-receive" },
 ]);
 
